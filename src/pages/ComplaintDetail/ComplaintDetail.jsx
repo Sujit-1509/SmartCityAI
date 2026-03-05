@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, ThumbsUp, Share2, Clock, User } from 'lucide-react';
-import { getComplaintById } from '../../services/api';
+import { getComplaintById, updateComplaintStatus } from '../../services/api';
 import { StatusBadge, SeverityBadge, CategoryTag, PriorityBar, Loader, TimeAgo } from '../../components/Shared/Shared';
 import './ComplaintDetail.css';
 const ComplaintDetail = () => {
     const { id } = useParams();
     const [complaint, setComplaint] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [updatingStatus, setUpdatingStatus] = useState(false);
+
+    const user = JSON.parse(localStorage.getItem('civicai_user') || '{}');
+    const canUpdateStatus = user.role === 'admin' || user.role === 'worker';
+
     useEffect(() => {
         getComplaintById(id).then((res) => {
             // The Lambda returns the item at top-level (res itself)
@@ -24,6 +29,25 @@ const ComplaintDetail = () => {
     const imageUrl = c.s3_key
         ? `https://civicai-images.s3.ap-south-1.amazonaws.com/${c.s3_key}`
         : null;
+
+    const handleStatusChange = async (e) => {
+        const newStatus = e.target.value;
+        setUpdatingStatus(true);
+        try {
+            const res = await updateComplaintStatus(c.incident_id || c.id, newStatus, "Status updated from detail page");
+            if (res.success) {
+                setComplaint({ ...c, status: newStatus });
+            } else {
+                alert('Failed to update status');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error updating status');
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
+
     return (
         <div className="detail-page">
             <div className="container">
@@ -33,7 +57,34 @@ const ComplaintDetail = () => {
                         <div className="card">
                             <div className="detail-top">
                                 <code className="detail-id">{c.incident_id || c.id}</code>
-                                <StatusBadge status={c.status} />
+                                {canUpdateStatus ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        {updatingStatus && <Loader text="" />}
+                                        <select
+                                            style={{
+                                                padding: '6px 12px',
+                                                borderRadius: '20px',
+                                                border: '1px solid var(--border-color)',
+                                                fontSize: '0.85rem',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                backgroundColor: 'var(--surface-color)',
+                                                outline: 'none'
+                                            }}
+                                            value={c.status || 'submitted'}
+                                            onChange={handleStatusChange}
+                                            disabled={updatingStatus}
+                                        >
+                                            <option value="submitted">Submitted</option>
+                                            <option value="assigned">Assigned</option>
+                                            <option value="in_progress">In Progress</option>
+                                            <option value="resolved">Resolved</option>
+                                            <option value="closed">Closed</option>
+                                        </select>
+                                    </div>
+                                ) : (
+                                    <StatusBadge status={c.status} />
+                                )}
                             </div>
                             <div className="detail-meta-row">
                                 <CategoryTag category={c.category} />
