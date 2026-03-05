@@ -19,7 +19,7 @@ const workerNav = [
   { to: '/worker', icon: <Home size={18} />, label: 'My Tasks' },
   { to: '/complaints', icon: <ClipboardList size={18} />, label: 'Complaints' },
 ];
-const Sidebar = ({ role = 'citizen', user }) => {
+const Sidebar = ({ role = 'citizen', user, onLogout }) => {
   const location = useLocation();
   const nav = role === 'admin' ? adminNav : role === 'worker' ? workerNav : citizenNav;
   const [mobileOpen, setMobileOpen] = useState(false);

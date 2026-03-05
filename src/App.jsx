@@ -24,7 +24,10 @@ function App() {
         localStorage.removeItem('civicai_user');
         localStorage.removeItem('civicai_token');
         setUser(null);
+        window.location.href = '/';
     };
+
+    const userRole = user?.role || 'citizen';
     return (
         <BrowserRouter>
             {!user ? (
