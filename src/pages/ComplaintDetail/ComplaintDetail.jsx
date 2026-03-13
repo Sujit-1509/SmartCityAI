@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, ThumbsUp, Share2, Clock, User } from 'lucide-react';
-import { getComplaintById, updateComplaintStatus } from '../../services/api';
+import { getComplaintById, updateComplaintStatus, upvoteComplaint } from '../../services/api';
 import { StatusBadge, SeverityBadge, CategoryTag, PriorityBar, Loader, TimeAgo } from '../../components/Shared/Shared';
 import './ComplaintDetail.css';
 const ComplaintDetail = () => {
@@ -12,13 +12,16 @@ const ComplaintDetail = () => {
 
     const user = JSON.parse(localStorage.getItem('civicai_user') || '{}');
     const canUpdateStatus = user.role === 'admin' || user.role === 'worker';
+    const backLink = canUpdateStatus ? '/complaints' : '/my-complaints';
+
+    const [upvotes, setUpvotes] = useState(0);
+    const [hasUpvoted, setHasUpvoted] = useState(false);
 
     useEffect(() => {
         getComplaintById(id).then((res) => {
-            // The Lambda returns the item at top-level (res itself)
-            // or wrapped as res.complaint from mock data
             const data = res.complaint || res;
             setComplaint(data);
+            setUpvotes(data.upvotes || 0);
             setLoading(false);
         });
     }, [id]);
@@ -29,6 +32,17 @@ const ComplaintDetail = () => {
     const imageUrl = c.s3_key
         ? `https://civicai-images.s3.ap-south-1.amazonaws.com/${c.s3_key}`
         : null;
+
+    const handleUpvote = async () => {
+        if (hasUpvoted) return;
+        try {
+            const res = await upvoteComplaint(c.incident_id || c.id);
+            setUpvotes(res.upvotes || upvotes + 1);
+            setHasUpvoted(true);
+        } catch (err) {
+            console.error('Upvote failed', err);
+        }
+    };
 
     const handleStatusChange = async (e) => {
         const newStatus = e.target.value;
@@ -51,7 +65,7 @@ const ComplaintDetail = () => {
     return (
         <div className="detail-page">
             <div className="container">
-                <Link to="/my-complaints" className="back-link"><ArrowLeft size={16} /> Back to Complaints</Link>
+                <Link to={backLink} className="back-link"><ArrowLeft size={16} /> Back to Complaints</Link>
                 <div className="detail-grid">
                     <div className="detail-main">
                         <div className="card">
@@ -136,6 +150,26 @@ const ComplaintDetail = () => {
                                     Reported by: <strong>{c.user_name}</strong>
                                 </p>
                             )}
+                        </div>
+                        <div className="card" style={{ marginTop: 'var(--space-md)' }}>
+                            <h3 className="sidebar-title"><ThumbsUp size={16} /> Community</h3>
+                            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
+                                <button
+                                    className={`btn ${hasUpvoted ? 'btn-primary' : 'btn-secondary'}`}
+                                    onClick={handleUpvote}
+                                    style={{ flex: 1 }}
+                                    disabled={hasUpvoted}
+                                >
+                                    <ThumbsUp size={14} /> {hasUpvoted ? 'Upvoted' : 'Upvote'} ({upvotes})
+                                </button>
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => navigator.clipboard.writeText(window.location.href)}
+                                    title="Copy link"
+                                >
+                                    <Share2 size={14} /> Share
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

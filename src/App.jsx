@@ -8,10 +8,10 @@ import SubmitComplaint from './pages/SubmitComplaint/SubmitComplaint';
 import MyComplaints from './pages/MyComplaints/MyComplaints';
 import ComplaintDetail from './pages/ComplaintDetail/ComplaintDetail';
 import Dashboard from './pages/Dashboard/Dashboard';
+import Analytics from './pages/Analytics/Analytics';
 import AdminComplaints from './pages/AdminComplaints/AdminComplaints';
 import Worker from './pages/Worker/Worker';
 import Login from './pages/Login/Login';
-import './App.css';
 function App() {
     const [user, setUser] = useState(() => {
         const saved = localStorage.getItem('civicai_user');
@@ -67,7 +67,7 @@ function App() {
                     <Routes>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/complaints" element={<AdminComplaints />} />
-                        <Route path="/analytics" element={<Dashboard />} />
+                        <Route path="/analytics" element={<Analytics />} />
                         <Route path="/worker" element={<Worker />} />
                         <Route path="/complaint/:id" element={<ComplaintDetail />} />
                         <Route path="*" element={<Navigate to={userRole === 'admin' ? '/dashboard' : '/worker'} replace />} />

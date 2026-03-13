@@ -101,11 +101,13 @@ export const TimeAgo = ({ date }) => {
     const now = new Date();
     const past = new Date(date);
     const diffMs = now - past;
+    if (diffMs < 0) return <span className="time-ago">Just now</span>;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
     let text;
-    if (diffMins < 60) text = `${diffMins}m ago`;
+    if (diffMins < 1) text = 'Just now';
+    else if (diffMins < 60) text = `${diffMins}m ago`;
     else if (diffHours < 24) text = `${diffHours}h ago`;
     else text = `${diffDays}d ago`;
     return <span className="time-ago">{text}</span>;

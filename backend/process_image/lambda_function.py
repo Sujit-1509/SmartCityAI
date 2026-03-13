@@ -25,6 +25,7 @@ from vision_fallback import classify_with_nova
 from severity_rules import calculate_severity
 from department_mapper import get_department
 from prompt_builder import generate_complaint_text
+from priority_calculator import calculate_priority
 
 # ── Structured Logging ───────────────────────────────────────────────────────
 logger = logging.getLogger()
@@ -186,6 +187,28 @@ def lambda_handler(event, context):
     location = f"s3://{bucket}/{key}"
     complaint_text = generate_complaint_text(category, severity, location)
 
+    # ── 5b. Priority Score Calculation ────────────────────────────────────────
+    #  Fetch latitude/longitude from the existing DynamoDB record if present
+    #  (set by the frontend during submission via generate_upload_url)
+    latitude = None
+    longitude = None
+    try:
+        table = dynamodb_resource.Table(TABLE_NAME)
+        existing = table.get_item(Key={"incident_id": incident_id}).get("Item", {})
+        latitude = float(existing.get("latitude", 0)) or None
+        longitude = float(existing.get("longitude", 0)) or None
+    except Exception:
+        pass
+
+    priority_score = calculate_priority(
+        category=category,
+        severity=severity,
+        confidence=confidence,
+        latitude=latitude,
+        longitude=longitude,
+        table_name=TABLE_NAME,
+    )
+
     # ── 6. Persist to DynamoDB ───────────────────────────────────────────────
     timestamp = datetime.now(timezone.utc).isoformat()
 
@@ -199,7 +222,18 @@ def lambda_handler(event, context):
         "status":      "Pending",
         "timestamp":   timestamp,
         "s3_key":      key,
+        "priorityScore": priority_score,
     }
+
+    # Preserve user-submitted fields (name, phone, address, lat/lng)
+    if latitude:
+        complaint_record["latitude"] = str(latitude)
+    if longitude:
+        complaint_record["longitude"] = str(longitude)
+    for field in ["user_name", "userPhone", "address", "user_note"]:
+        val = existing.get(field)
+        if val:
+            complaint_record[field] = val
 
     save_to_dynamodb(complaint_record)
 
@@ -214,11 +248,12 @@ def lambda_handler(event, context):
 
     # ── 8. Return Result ─────────────────────────────────────────────────────
     result = {
-        "status":      "Processed",
-        "incident_id": incident_id,
-        "category":    category,
-        "severity":    severity,
-        "department":  department,
+        "status":        "Processed",
+        "incident_id":   incident_id,
+        "category":      category,
+        "severity":      severity,
+        "department":    department,
+        "priorityScore": priority_score,
     }
 
     logger.info("Lambda complete: %s", json.dumps(result))

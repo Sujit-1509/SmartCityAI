@@ -1,20 +1,31 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { FileText, Flame, CheckCircle, Clock } from 'lucide-react';
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
-import { getDashboardStats } from '../../services/api';
+import { getDashboardStats, getComplaints } from '../../services/api';
 import { StatsCard, Loader, StatusBadge, SeverityBadge, CategoryTag, TimeAgo } from '../../components/Shared/Shared';
-import { mockComplaints } from '../../data/mockData';
 import './Dashboard.css';
 const Dashboard = () => {
     const [stats, setStats] = useState(null);
+    const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
-        getDashboardStats().then((res) => {
-            setStats(res.stats);
+        Promise.all([
+            getDashboardStats(),
+            getComplaints()
+        ]).then(([statsRes, complaintsRes]) => {
+            setStats(statsRes.stats);
+            setComplaints(complaintsRes.complaints || []);
             setLoading(false);
         });
     }, []);
     if (loading) return <div className="dash-page"><Loader size="lg" text="Loading dashboard..." /></div>;
+
+    // Sort by timestamp descending, show latest 10
+    const recentComplaints = [...complaints]
+        .sort((a, b) => new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt))
+        .slice(0, 10);
+
     return (
         <div className="dash-page">
             <div className="container">
@@ -27,83 +38,56 @@ const Dashboard = () => {
                 </div>
                 <div className="stats-grid">
                     <StatsCard icon={<FileText size={20} />} label="Total Complaints" value={stats.totalComplaints.toLocaleString()} change="+38 today" changeType="up" />
-                    <StatsCard icon={<Flame size={20} />} label="Active" value={stats.activeComplaints} change="12% of total" changeType="up" />
-                    <StatsCard icon={<CheckCircle size={20} />} label="Resolution Rate" value={stats.resolutionRate + '%'} change="+2.1%" changeType="up" />
-                    <StatsCard icon={<Clock size={20} />} label="Avg Response" value={stats.avgResponseTime} change="-0.3 days" changeType="up" />
+                    <StatsCard icon={<Flame size={20} />} label="Active" value={stats.activeComplaints} change="12% of total" changeType="warning" />
+                    <StatsCard icon={<CheckCircle size={20} />} label="Resolved Today" value="42" change="High activity" changeType="up" />
+                    <StatsCard icon={<Clock size={20} />} label="Pending Triage" value="8" change="Action needed" changeType="down" />
                 </div>
-                <div className="charts-row">
-                    <div className="chart-card card">
-                        <h3>Category Distribution</h3>
-                        <ResponsiveContainer width="100%" height={260}>
-                            <PieChart>
-                                <Pie data={stats.categoryBreakdown} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                                    {stats.categoryBreakdown.map((entry, i) => (
-                                        <Cell key={i} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="chart-card card">
-                        <h3>Monthly Trends</h3>
-                        <ResponsiveContainer width="100%" height={260}>
-                            <LineChart data={stats.monthlyTrends}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
-                                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
-                                <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                <Line type="monotone" dataKey="complaints" stroke="var(--primary-light)" strokeWidth={2.5} dot={{ fill: 'var(--primary-light)', r: 4 }} />
-                                <Line type="monotone" dataKey="resolved" stroke="var(--success)" strokeWidth={2.5} dot={{ fill: 'var(--success)', r: 4 }} />
-                                <Legend />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-                <div className="chart-card card">
-                    <h3>Department Performance</h3>
-                    <ResponsiveContainer width="100%" height={280}>
-                        <BarChart data={stats.departmentPerformance} layout="vertical">
-                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                            <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
-                            <YAxis type="category" dataKey="dept" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={90} />
-                            <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                            <Bar dataKey="resolved" fill="var(--success)" radius={[0, 4, 4, 0]} name="Resolved" />
-                            <Bar dataKey="pending" fill="var(--warning)" radius={[0, 4, 4, 0]} name="Pending" />
-                            <Legend />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="stats-grid" style={{ marginTop: 'var(--space-lg)' }}>
+                    <StatsCard icon={<Clock size={20} />} label="Resolution Rate" value={stats.resolutionRate + '%'} change="+2.1%" changeType="up" />
+                    <StatsCard icon={<Flame size={20} />} label="Avg Response" value={stats.avgResponseTime} change="-0.3 days" changeType="up" />
                 </div>
                 <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
                     <h3 style={{ marginBottom: 'var(--space-md)' }}>Recent Complaints</h3>
-                    <div className="table-wrapper">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Category</th>
-                                    <th>Severity</th>
-                                    <th>Status</th>
-                                    <th>Priority</th>
-                                    <th>Location</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {mockComplaints.map((c) => (
-                                    <tr key={c.id}>
-                                        <td><code style={{ color: 'var(--primary-light)', fontSize: '12px' }}>{c.id}</code></td>
-                                        <td><CategoryTag category={c.category} /></td>
-                                        <td><SeverityBadge severity={c.severity} /></td>
-                                        <td><StatusBadge status={c.status} /></td>
-                                        <td><strong>{c.priorityScore}</strong></td>
-                                        <td className="text-sm text-muted">{c.address.split(',')[0]}</td>
-                                        <td><TimeAgo date={c.createdAt} /></td>
+                    {recentComplaints.length === 0 ? (
+                        <p className="text-muted text-sm" style={{ padding: 'var(--space-lg)', textAlign: 'center' }}>No complaints in the system yet.</p>
+                    ) : (
+                        <div className="table-wrapper">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Category</th>
+                                        <th>Severity</th>
+                                        <th>Status</th>
+                                        <th>Department</th>
+                                        <th>Location</th>
+                                        <th>Reported By</th>
+                                        <th>Time</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {recentComplaints.map((c) => (
+                                        <tr key={c.incident_id || c.id}>
+                                            <td>
+                                                <Link to={`/complaint/${c.incident_id || c.id}`}>
+                                                    <code style={{ color: 'var(--primary-light)', fontSize: '12px' }}>{(c.incident_id || c.id)?.split('-').pop()}</code>
+                                                </Link>
+                                            </td>
+                                            <td><CategoryTag category={c.category} /></td>
+                                            <td><SeverityBadge severity={c.severity} /></td>
+                                            <td><StatusBadge status={c.status} /></td>
+                                            <td className="text-sm">{c.department || '—'}</td>
+                                            <td className="text-sm text-muted" style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.address}>
+                                                {c.address ? (c.address.includes('°N') ? c.address : c.address.split(',').slice(0, 2).join(', ')) : '—'}
+                                            </td>
+                                            <td className="text-sm">{c.user_name || '—'}</td>
+                                            <td><TimeAgo date={c.timestamp || c.createdAt} /></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ClipboardList, ThumbsUp } from 'lucide-react';
+import { ClipboardList, ThumbsUp, MapPin } from 'lucide-react';
 import { getComplaints } from '../../services/api';
 import { StatusBadge, SeverityBadge, CategoryTag, TimeAgo, Loader, EmptyState, PriorityBar } from '../../components/Shared/Shared';
 import './MyComplaints.css';
@@ -78,6 +78,14 @@ const MyComplaints = () => {
                                 <div className="mc-card-body">
                                     <CategoryTag category={c.category} />
                                     <p className="mc-desc">{c.description}</p>
+                                    {c.address && (
+                                        <p className="text-sm text-muted" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
+                                            <MapPin size={14} />
+                                            <span className="truncate-text" title={c.address}>
+                                                {c.address.includes('°N') ? c.address : c.address.split(',').slice(0, 2).join(', ')}
+                                            </span>
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="mc-card-meta">
                                     <div className="mc-prio">

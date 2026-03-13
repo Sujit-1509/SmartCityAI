@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Upload, MapPin, Loader2, CheckCircle, ArrowLeft, ArrowRight, X, Camera, Edit3, Cpu } from 'lucide-react';
+import { Upload, MapPin, Loader2, CheckCircle, ArrowLeft, ArrowRight, X, Camera, Edit3, Cpu, Copy } from 'lucide-react';
 import { analyzeImage, submitComplaint } from '../../services/api';
 import { SeverityBadge, CategoryTag, PriorityBar } from '../../components/Shared/Shared';
 import './SubmitComplaint.css';
@@ -20,11 +20,23 @@ const SubmitComplaint = () => {
     useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
+                async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    let addr = `${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`;
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                        const data = await res.json();
+                        if (data && data.display_name) {
+                            addr = data.display_name;
+                        }
+                    } catch (e) {
+                        console.error('Reverse geocoding failed', e);
+                    }
                     setLocation({
-                        latitude: pos.coords.latitude,
-                        longitude: pos.coords.longitude,
-                        address: `${pos.coords.latitude.toFixed(4)}°N, ${pos.coords.longitude.toFixed(4)}°E`,
+                        latitude: lat,
+                        longitude: lng,
+                        address: addr,
                     });
                 },
                 () => {
@@ -271,7 +283,17 @@ const SubmitComplaint = () => {
                             <div className="confirmation-card card">
                                 <div className="conf-row">
                                     <span>Complaint ID</span>
-                                    <strong className="conf-id">{result.complaintId}</strong>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <strong className="conf-id">{result.complaintId}</strong>
+                                        <button
+                                            className="btn btn-sm btn-secondary"
+                                            onClick={() => { navigator.clipboard.writeText(result.complaintId); }}
+                                            title="Copy ID"
+                                            style={{ padding: '2px 6px' }}
+                                        >
+                                            <Copy size={12} />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="conf-row">
                                     <span>Status</span>

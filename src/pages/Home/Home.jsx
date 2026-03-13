@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Camera, MapPin, Zap, Shield, TrendingUp, Cpu, Send, BarChart3, ArrowRight } from 'lucide-react';
 import { getNearbyComplaints } from '../../services/api';
 import { StatusBadge, SeverityBadge, CategoryTag, TimeAgo } from '../../components/Shared/Shared';
+import heroImage from '../../assets/hero-image.jpeg';
 import './Home.css';
 const Home = () => {
     const [nearby, setNearby] = useState([]);
@@ -44,7 +45,7 @@ const Home = () => {
                         </div>
                         <div className="hero-image animate-fade-in">
                             <img
-                                src="https://images.unsplash.com/photo-1567157577867-05ccb1388e13?w=600&h=400&fit=crop"
+                                src={heroImage}
                                 alt="Pune Smart City"
                                 className="hero-img"
                                 onError={(e) => {

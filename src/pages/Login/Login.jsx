@@ -87,7 +87,7 @@ const Login = ({ onLogin }) => {
                 </div>
 
                 {error && (
-                    <div className="error-message" style={{ color: '#dc3545', backgroundColor: '#f8d7da', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '0.9rem' }}>
+                    <div className="login-error">
                         {error}
                     </div>
                 )}

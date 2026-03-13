@@ -6,14 +6,12 @@ const citizenNav = [
   { to: '/', icon: <Home size={18} />, label: 'Home' },
   { to: '/submit', icon: <FileText size={18} />, label: 'Report Issue' },
   { to: '/my-complaints', icon: <ClipboardList size={18} />, label: 'My Complaints' },
-  { to: '/track', icon: <BarChart3 size={18} />, label: 'Track Complaint' },
-  { to: '/help', icon: <HelpCircle size={18} />, label: 'Help' },
 ];
 const adminNav = [
   { to: '/dashboard', icon: <Home size={18} />, label: 'Dashboard' },
   { to: '/complaints', icon: <ClipboardList size={18} />, label: 'All Complaints' },
   { to: '/analytics', icon: <BarChart3 size={18} />, label: 'Analytics' },
-  { to: '/workers', icon: <Users size={18} />, label: 'Workers' },
+  { to: '/worker', icon: <Users size={18} />, label: 'Workers' },
 ];
 const workerNav = [
   { to: '/worker', icon: <Home size={18} />, label: 'My Tasks' },
@@ -64,7 +62,7 @@ const Sidebar = ({ role = 'citizen', user, onLogout }) => {
           </div>
           <div className="sidebar-user-info">
             <div className="sidebar-user-name">{user?.name || 'User'}</div>
-            <div className="sidebar-user-role">{role}</div>
+            <div className="sidebar-user-role">{role.charAt(0).toUpperCase() + role.slice(1)}</div>
           </div>
         </div>
         <button className="sidebar-logout" onClick={onLogout}>
