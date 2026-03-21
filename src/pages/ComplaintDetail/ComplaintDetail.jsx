@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, ThumbsUp, Share2, Clock, User, CheckCircle, Camera } from 'lucide-react';
-import { getComplaintById, updateComplaintStatus, upvoteComplaint } from '../../services/api';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, MapPin, ThumbsUp, Share2, Clock, User, CheckCircle, Camera, Trash2 } from 'lucide-react';
+import { getComplaintById, updateComplaintStatus, upvoteComplaint, deleteComplaint } from '../../services/api';
 import { StatusBadge, SeverityBadge, CategoryTag, PriorityBar, Loader, TimeAgo } from '../../components/Shared/Shared';
 import './ComplaintDetail.css';
 
@@ -69,6 +69,7 @@ function TimelineEntry({ entry, isLast }) {
 
 const ComplaintDetail = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [complaint,      setComplaint]      = useState(null);
     const [loading,        setLoading]        = useState(true);
     const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -115,6 +116,22 @@ const ComplaintDetail = () => {
         }
     };
 
+    const handleDelete = async () => {
+        if (window.confirm("Are you sure you want to delete this complaint? This cannot be undone.")) {
+            try {
+                const res = await deleteComplaint(c.incident_id || c.id);
+                if (res.success) {
+                    navigate(backLink);
+                } else {
+                    alert('Failed to delete complaint from server.');
+                }
+            } catch (err) {
+                console.error('Delete failed:', err);
+                alert('Error deleting complaint.');
+            }
+        }
+    };
+
     const handleStatusChange = async e => {
         const newStatus = e.target.value;
         setUpdatingStatus(true);
@@ -155,7 +172,18 @@ const ComplaintDetail = () => {
                     <div className="detail-main">
                         <div className="card">
                             <div className="detail-top">
-                                <code className="detail-id">{c.incident_id || c.id}</code>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <code className="detail-id">{c.incident_id || c.id}</code>
+                                    {(user.role === 'admin' || user.phone === c.user_phone) && (
+                                        <button 
+                                            onClick={handleDelete}
+                                            style={{ padding: '6px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                            title="Delete Complaint"
+                                        >
+                                            <Trash2 size={16} color="var(--danger)" />
+                                        </button>
+                                    )}
+                                </div>
                                 {canUpdateStatus ? (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                         {updatingStatus && <Loader text="" />}

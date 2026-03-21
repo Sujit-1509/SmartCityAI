@@ -126,6 +126,15 @@ export async function upvoteComplaint(id) {
     }
 }
 
+export async function deleteComplaint(id) {
+    try {
+        return await api.delete(`/complaints/${id}`);
+    } catch (err) {
+        console.warn('API unreachable, using mock delete:', err.message);
+        return { success: true };
+    }
+}
+
 // ─── Complaints (write) ──────────────────────────────────────────────────────
 
 export async function submitComplaint(data) {
