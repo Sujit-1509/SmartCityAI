@@ -99,6 +99,12 @@ const ComplaintDetail = () => {
     const imageUrl      = c.s3_key ? `${S3_BASE}${c.s3_key}` : null;
     const proofUrl      = c.resolution_proof_key ? `${S3_BASE}${c.resolution_proof_key}` : null;
 
+    const uPhone = String(user.phone || user.userPhone || '').trim();
+    const cPhone = String(c.user_phone || c.userPhone || '').trim();
+    const isOwner = (user.role === 'admin') || 
+                    (uPhone && cPhone && (cPhone.includes(uPhone) || uPhone.includes(cPhone))) ||
+                    (user.name && c.user_name && user.name === c.user_name);
+
     // Build timeline: inject the initial "submitted" entry if status_history is empty
     const rawHistory    = Array.isArray(c.status_history) ? c.status_history : [];
     const timeline      = rawHistory.length > 0
@@ -174,7 +180,7 @@ const ComplaintDetail = () => {
                             <div className="detail-top">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                     <code className="detail-id">{c.incident_id || c.id}</code>
-                                    {(user.role === 'admin' || user.phone === c.user_phone) && (
+                                    {isOwner && (
                                         <button 
                                             onClick={handleDelete}
                                             style={{ padding: '6px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
