@@ -46,3 +46,8 @@ __pycache__/
 
 # Misc
 .gemini/
+
+# Temporary UI migration files
+civicai-ui-redesign-extracted/
+*.zip
+assign_complaint_v2.zip

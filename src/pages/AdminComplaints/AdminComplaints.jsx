@@ -120,7 +120,7 @@ export default function AdminComplaints() {
                 !c.user_name?.toLowerCase().includes(q)) return false;
         }
         return true;
-    });
+    }).sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0));
 
     // ── Selection helpers ─────────────────────────────────────────────────────
     const toggleSelect = id => setSelected(s => {

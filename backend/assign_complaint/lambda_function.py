@@ -15,7 +15,11 @@ logger.setLevel(logging.INFO)
 
 REGION     = os.environ.get('REGION', 'ap-south-1')
 TABLE_NAME = os.environ.get('TABLE_NAME', 'Complaints')
-SECRET_KEY = os.environ.get('JWT_SECRET', 'civicai-fallback-secret-key-12345').encode('utf-8')
+SECRET_KEY = os.environ.get('JWT_SECRET')
+if not SECRET_KEY:
+    logger.error("JWT_SECRET environment variable is missing!")
+    # We will let the verify_token handle the None, but logging it is good
+SECRET_KEY = SECRET_KEY.encode('utf-8') if SECRET_KEY else b''
 
 dynamodb = boto3.resource('dynamodb', region_name=REGION)
 

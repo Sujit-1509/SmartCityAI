@@ -133,8 +133,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* Charts Row */}
-                <div className="dash-charts-row">
-                    <div className="chart-card card">
+                <div className="dash-charts">
+                    <div className="dash-chart-card">
                         <h3>Category distribution</h3>
                         <ResponsiveContainer width="100%" height={240}>
                             <PieChart>
@@ -164,7 +164,7 @@ const Dashboard = () => {
                         </ResponsiveContainer>
                     </div>
 
-                    <div className="chart-card card">
+                    <div className="dash-chart-card">
                         <h3>Monthly trends</h3>
                         <ResponsiveContainer width="100%" height={240}>
                             <LineChart data={stats.monthlyTrends}>
@@ -274,7 +274,7 @@ const Dashboard = () => {
                 )}
 
                 {/* Recent Complaints table */}
-                <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
+                <div className="dash-recent" style={{ marginTop: 'var(--space-lg)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
                         <h3>Recent complaints</h3>
                         <Link to="/complaints" className="btn btn-sm btn-secondary">View all</Link>

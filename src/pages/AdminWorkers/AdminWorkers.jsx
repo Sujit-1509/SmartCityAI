@@ -108,31 +108,25 @@ const AdminWorkers = () => {
                     </div>
                 </div>
 
-                <div className="dashboard-kpis mb-2" style={{ display: 'flex', gap: '16px', padding: '0 24px', marginTop: '16px' }}>
-                    <div className="kpi-card mini-stats glass-panel">
-                        <div className="kpi-icon"><UserPlus size={20} /></div>
-                        <div className="kpi-info">
-                            <span className="kpi-value">{workers.length}</span>
-                            <span className="kpi-label">Active Workers</span>
-                        </div>
+                <div className="worker-stats-mini mb-2" style={{ marginTop: '16px', padding: '0 20px' }}>
+                    <div className="wstat">
+                        <span className="wstat-val">{workers.length}</span>
+                        <span className="wstat-lbl">Active Workers</span>
                     </div>
-                    <div className="kpi-card mini-stats glass-panel">
-                        <div className="kpi-icon"><Building2 size={20} /></div>
-                        <div className="kpi-info">
-                            <span className="kpi-value">{new Set(workers.map(w => w.department)).size}</span>
-                            <span className="kpi-label">Departments</span>
-                        </div>
+                    <div className="wstat">
+                        <span className="wstat-val">{new Set(workers.map(w => w.department)).size}</span>
+                        <span className="wstat-lbl">Departments</span>
                     </div>
                 </div>
 
-                <div className="table-responsive">
-                    <table className="premium-table">
+                <div className="workers-table-wrapper">
+                    <table className="workers-table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Phone Number</th>
+                                <th>Worker Info</th>
                                 <th>Department</th>
                                 <th>Added Date</th>
+                                <th>Status</th>
                                 <th className="text-right">Actions</th>
                             </tr>
                         </thead>
@@ -147,20 +141,30 @@ const AdminWorkers = () => {
                             ) : filteredWorkers.length > 0 ? (
                                 filteredWorkers.map((worker) => (
                                     <tr key={worker.phone} className="worker-row">
-                                        <td className="fw-500">{worker.name}</td>
-                                        <td className="font-mono text-muted">{worker.phone}</td>
-                                        <td><span className="dept-pill">{worker.department}</span></td>
+                                        <td>
+                                            <div className="worker-name-cell">
+                                                <div className="worker-avatar">{worker.name.charAt(0)}</div>
+                                                <div>
+                                                    <div className="worker-name">{worker.name}</div>
+                                                    <div className="worker-phone">{worker.phone}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span className="dept-pill badge" style={{background: 'var(--info-bg)', color: 'var(--info)', border: '1px solid var(--info-border)'}}>{worker.department}</span></td>
                                         <td className="text-muted text-sm">
                                             {worker.created_at ? new Date(worker.created_at).toLocaleDateString() : 'N/A'}
                                         </td>
+                                        <td><span className="status-dot active">Active</span></td>
                                         <td className="text-right">
-                                            <button 
-                                                className="icon-btn danger" 
-                                                onClick={() => handleDeleteWorker(worker.phone, worker.name)}
-                                                title="Remove Worker"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            <div className="action-cell" style={{justifyContent: 'flex-end'}}>
+                                                <button 
+                                                    className="btn btn-icon danger" 
+                                                    onClick={() => handleDeleteWorker(worker.phone, worker.name)}
+                                                    title="Remove Worker"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -179,38 +183,28 @@ const AdminWorkers = () => {
 
             {/* Add Worker Modal */}
             {showAddModal && (
-                <div className="modal-backdrop">
-                    <div className="modal-content glass-modal animate-slide-up">
-                        <div className="modal-header">
-                            <div className="modal-title-wrapper">
-                                <div className="modal-icon-bg"><UserPlus size={24} className="text-primary" /></div>
-                                <h3>Register New Worker</h3>
-                            </div>
-                            <p className="modal-subtitle">Add a new staff member to the field roster.</p>
-                            <button className="icon-btn close-btn" onClick={() => setShowAddModal(false)}>&times;</button>
+                <div className="worker-modal-overlay">
+                    <div className="worker-modal">
+                        <div className="modal-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                            <h2>Register New Worker</h2>
+                            <button className="btn btn-icon" onClick={() => setShowAddModal(false)}>&times;</button>
                         </div>
-                        <form onSubmit={handleAddWorker} className="modal-body premium-form">
-                            <div className="form-group">
-                                <label>Full Name</label>
-                                <div className="input-with-icon">
-                                    <User size={18} className="input-icon" />
+                        <form onSubmit={handleAddWorker} className="modal-body">
+                            <div className="form-grid">
+                                <div className="form-group form-grid-full">
+                                    <label>Full Name</label>
                                     <input
                                         type="text"
-                                        className="input premium-input"
                                         placeholder="e.g. Ramesh Singh"
                                         value={newWorker.name}
                                         onChange={(e) => setNewWorker({ ...newWorker, name: e.target.value })}
                                         required
                                     />
                                 </div>
-                            </div>
-                            <div className="form-group">
-                                <label>Phone Number (10 digits)</label>
-                                <div className="input-with-icon">
-                                    <Phone size={18} className="input-icon" />
+                                <div className="form-group">
+                                    <label>Phone Number</label>
                                     <input
                                         type="tel"
-                                        className="input premium-input font-mono"
                                         placeholder="9876543210"
                                         pattern="[0-9]{10}"
                                         value={newWorker.phone}
@@ -218,13 +212,9 @@ const AdminWorkers = () => {
                                         required
                                     />
                                 </div>
-                            </div>
-                            <div className="form-group">
-                                <label>Department</label>
-                                <div className="input-with-icon">
-                                    <Briefcase size={18} className="input-icon" />
+                                <div className="form-group">
+                                    <label>Department</label>
                                     <select 
-                                        className="input premium-input custom-select"
                                         value={newWorker.department}
                                         onChange={(e) => setNewWorker({ ...newWorker, department: e.target.value })}
                                     >
@@ -236,10 +226,10 @@ const AdminWorkers = () => {
                                     </select>
                                 </div>
                             </div>
-                            <div className="modal-footer mt-4">
-                                <button type="button" className="btn btn-secondary ghost-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary premium-btn glow-btn" disabled={adding}>
-                                    {adding ? <Loader2 size={16} className="spin-icon" /> : <Plus size={18} />} 
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-ghost" onClick={() => setShowAddModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={adding}>
+                                    {adding ? <Loader2 size={16} className="spin-icon" /> : <Plus size={16} />} 
                                     {adding ? 'Adding...' : 'Register Worker'}
                                 </button>
                             </div>

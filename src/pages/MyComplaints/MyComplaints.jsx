@@ -21,7 +21,9 @@ const MyComplaints = () => {
         }
         setLoading(true);
         getComplaints(f).then((res) => {
-            setComplaints(res.complaints || []);
+            const arr = res.complaints || [];
+            arr.sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0));
+            setComplaints(arr);
             setLoading(false);
         });
     }, [filter, categoryFilter]);

@@ -2,7 +2,7 @@
   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/120px-Emblem_of_India.svg.png" alt="Emblem of India" width="80" />
 </p>
 
-<h1 align="center">CivicAI — Smart Municipal Complaint System</h1>
+<h1 align="center">SmartCityAI — Smart Municipal Complaint System</h1>
 
 <p align="center">
   <strong>AI-Powered Civic Engagement Platform</strong><br/>
@@ -20,7 +20,7 @@
 
 ## Overview
 
-CivicAI is a fully serverless platform that enables citizens to report civic issues (potholes, garbage, broken streetlights, waterlogging) by simply uploading a photo. The system uses a custom-trained **YOLOv8** computer vision model and **Amazon Bedrock (Claude)** to automatically:
+SmartCityAI is a fully serverless platform that enables citizens to report civic issues (potholes, garbage, broken streetlights, waterlogging) by simply uploading a photo. The system uses a custom-trained **YOLOv8** computer vision model and **Amazon Bedrock (Claude)** to automatically:
 
 1. **Detect** the issue type with 90%+ accuracy
 2. **Assess** severity using rule-based logic
@@ -34,7 +34,7 @@ Citizens authenticate via OTP (SMS) and can track their complaints in real-time.
 
 ## Live Demo
 
-> **Production URL:** [https://dpsfubu0rsyo3.cloudfront.net](https://dpsfubu0rsyo3.cloudfront.net)
+> **Production URL:** [https://d1lggct31hc8gn.cloudfront.net](https://d1lggct31hc8gn.cloudfront.net)
 
 **Quick Login:** Enter any name, any 10-digit phone number, and use OTP `123456` to log in.
 
@@ -44,6 +44,7 @@ Citizens authenticate via OTP (SMS) and can track their complaints in real-time.
 
 | Feature | Description |
 |---------|-------------|
+| **Premium UI Design** | Built on **Design System v3** (Glassmorphism, gradients, modern utility classes) |
 | **Photo-Based Reporting** | Upload a photo → AI detects potholes, garbage, broken lights, waterlogging |
 | **YOLOv8 Vision AI** | Custom-trained model with robust issue detection + confidence scoring |
 | **LLM Descriptions** | Amazon Bedrock (Claude) generates formal complaint text automatically |
@@ -197,7 +198,7 @@ civicai-frontend/
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/CivicAI.git
+git clone https://github.com/YOUR-USERNAME/SmartCityAI.git
 cd civicai-frontend
 npm install
 ```
@@ -229,7 +230,7 @@ Upload the `dist/` folder to your S3 bucket and create a CloudFront invalidation
 
 ### 5. Amazon Pinpoint (SMS OTP) Configuration
 
-CivicAI uses Amazon Pinpoint/SNS for phone authentication. Ensure your AWS account is out of the **SMS Sandbox**.
+SmartCityAI uses Amazon Pinpoint/SNS for phone authentication. Ensure your AWS account is out of the **SMS Sandbox**.
 
 1. Navigate to the **Amazon Pinpoint Console** in `ap-south-1`.
 2. Access **SMS and voice** settings.
@@ -274,5 +275,5 @@ MIT License
 ---
 
 <p align="center">
-  <strong>CivicAI</strong> — Making Indian cities smarter, one photo at a time.
+  <strong>SmartCityAI</strong> — Making Indian cities smarter, one photo at a time.
 </p>
