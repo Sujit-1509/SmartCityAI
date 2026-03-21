@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Search, UserPlus, ShieldAlert, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Search, UserPlus, ShieldAlert, Loader2, Phone, User, Briefcase, Building2 } from 'lucide-react';
 import { getWorkers, addWorker, removeWorker } from '../../services/api';
 import './AdminWorkers.css';
 
@@ -106,8 +106,22 @@ const AdminWorkers = () => {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                    <div className="worker-stats">
-                        <span className="stat-pill"><span className="dot active"></span> {workers.length} Total Workers</span>
+                </div>
+
+                <div className="dashboard-kpis mb-2" style={{ display: 'flex', gap: '16px', padding: '0 24px', marginTop: '16px' }}>
+                    <div className="kpi-card mini-stats glass-panel">
+                        <div className="kpi-icon"><UserPlus size={20} /></div>
+                        <div className="kpi-info">
+                            <span className="kpi-value">{workers.length}</span>
+                            <span className="kpi-label">Active Workers</span>
+                        </div>
+                    </div>
+                    <div className="kpi-card mini-stats glass-panel">
+                        <div className="kpi-icon"><Building2 size={20} /></div>
+                        <div className="kpi-info">
+                            <span className="kpi-value">{new Set(workers.map(w => w.department)).size}</span>
+                            <span className="kpi-label">Departments</span>
+                        </div>
                     </div>
                 </div>
 
@@ -168,52 +182,65 @@ const AdminWorkers = () => {
                 <div className="modal-backdrop">
                     <div className="modal-content glass-modal animate-slide-up">
                         <div className="modal-header">
-                            <h3>Register New Worker</h3>
-                            <button className="icon-btn" onClick={() => setShowAddModal(false)}>&times;</button>
+                            <div className="modal-title-wrapper">
+                                <div className="modal-icon-bg"><UserPlus size={24} className="text-primary" /></div>
+                                <h3>Register New Worker</h3>
+                            </div>
+                            <p className="modal-subtitle">Add a new staff member to the field roster.</p>
+                            <button className="icon-btn close-btn" onClick={() => setShowAddModal(false)}>&times;</button>
                         </div>
-                        <form onSubmit={handleAddWorker} className="modal-body">
+                        <form onSubmit={handleAddWorker} className="modal-body premium-form">
                             <div className="form-group">
                                 <label>Full Name</label>
-                                <input
-                                    type="text"
-                                    className="input premium-input"
-                                    placeholder="e.g. Ramesh Singh"
-                                    value={newWorker.name}
-                                    onChange={(e) => setNewWorker({ ...newWorker, name: e.target.value })}
-                                    required
-                                />
+                                <div className="input-with-icon">
+                                    <User size={18} className="input-icon" />
+                                    <input
+                                        type="text"
+                                        className="input premium-input"
+                                        placeholder="e.g. Ramesh Singh"
+                                        value={newWorker.name}
+                                        onChange={(e) => setNewWorker({ ...newWorker, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label>Phone Number (10 digits)</label>
-                                <input
-                                    type="tel"
-                                    className="input premium-input font-mono"
-                                    placeholder="9876543210"
-                                    pattern="[0-9]{10}"
-                                    value={newWorker.phone}
-                                    onChange={(e) => setNewWorker({ ...newWorker, phone: e.target.value.replace(/\D/g, '') })}
-                                    required
-                                />
+                                <div className="input-with-icon">
+                                    <Phone size={18} className="input-icon" />
+                                    <input
+                                        type="tel"
+                                        className="input premium-input font-mono"
+                                        placeholder="9876543210"
+                                        pattern="[0-9]{10}"
+                                        value={newWorker.phone}
+                                        onChange={(e) => setNewWorker({ ...newWorker, phone: e.target.value.replace(/\D/g, '') })}
+                                        required
+                                    />
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label>Department</label>
-                                <select 
-                                    className="input premium-input"
-                                    value={newWorker.department}
-                                    onChange={(e) => setNewWorker({ ...newWorker, department: e.target.value })}
-                                >
-                                    <option value="PWD">PWD (Roads & Infrastructure)</option>
-                                    <option value="Sanitation">Sanitation (Waste Management)</option>
-                                    <option value="Water Supply">Water Supply Board</option>
-                                    <option value="Electricity">Electricity Board</option>
-                                    <option value="Parks & Rec">Parks & Recreation</option>
-                                </select>
+                                <div className="input-with-icon">
+                                    <Briefcase size={18} className="input-icon" />
+                                    <select 
+                                        className="input premium-input custom-select"
+                                        value={newWorker.department}
+                                        onChange={(e) => setNewWorker({ ...newWorker, department: e.target.value })}
+                                    >
+                                        <option value="PWD">PWD (Roads & Infrastructure)</option>
+                                        <option value="Sanitation">Sanitation (Waste Management)</option>
+                                        <option value="Water Supply">Water Supply Board</option>
+                                        <option value="Electricity">Electricity Board</option>
+                                        <option value="Parks & Rec">Parks & Recreation</option>
+                                    </select>
+                                </div>
                             </div>
                             <div className="modal-footer mt-4">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary premium-btn" disabled={adding}>
-                                    {adding ? <Loader2 size={16} className="spin-icon" /> : <Plus size={16} />} 
-                                    {adding ? 'Adding...' : 'Add Worker'}
+                                <button type="button" className="btn btn-secondary ghost-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary premium-btn glow-btn" disabled={adding}>
+                                    {adding ? <Loader2 size={16} className="spin-icon" /> : <Plus size={18} />} 
+                                    {adding ? 'Adding...' : 'Register Worker'}
                                 </button>
                             </div>
                         </form>

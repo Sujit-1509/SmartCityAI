@@ -184,13 +184,8 @@ export async function assignComplaint(incidentId, workerPhone, workerName, note 
             note,
         });
     } catch (err) {
-        console.warn('Assign API unreachable, mock response:', err.message);
-        return {
-            success:      true,
-            incident_id:  incidentId,
-            assigned_to:  workerPhone,
-            sla_deadline: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
-        };
+        console.error('Assign API failed:', err.message);
+        throw err;
     }
 }
 
@@ -207,13 +202,8 @@ export async function bulkUpdateComplaints({ incidentIds, action, status, worker
             note,
         });
     } catch (err) {
-        console.warn('Bulk update API unreachable, mock response:', err.message);
-        return {
-            success:       true,
-            updated_count: incidentIds.length,
-            failed_count:  0,
-            results:       { updated: incidentIds, failed: [] },
-        };
+        console.error('Bulk update API failed:', err.message);
+        throw err;
     }
 }
 
