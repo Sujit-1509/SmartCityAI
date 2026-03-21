@@ -1,30 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { analyzeImages, submitComplaint } from '../services/api';
 
 export function useComplaintSubmission(location) {
-    const [step, setStep] = useState(0);
+    // Restore draft from sessionStorage
+    const draft = JSON.parse(sessionStorage.getItem('jansevaai_draft') || '{}');
+
+    const [step, setStepRaw] = useState(draft.step && draft.step < 3 ? draft.step : 0);
     const [images, setImages] = useState([]);
     const [previews, setPreviews] = useState([]);
     const [analysis, setAnalysis] = useState(null);
     const [s3Keys, setS3Keys] = useState([]);
     const [result, setResult] = useState(null);
-    const [userNote, setUserNote] = useState('');
+    const [userNote, setUserNoteRaw] = useState(draft.userNote || '');
     const [analyzing, setAnalyzing] = useState(false);
     const [analysisProgress, setAnalysisProgress] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
+    // Persist draft on step/note changes
+    const setStep = useCallback((s) => {
+        setStepRaw(s);
+        const d = JSON.parse(sessionStorage.getItem('jansevaai_draft') || '{}');
+        sessionStorage.setItem('jansevaai_draft', JSON.stringify({ ...d, step: s }));
+    }, []);
+    const setUserNote = useCallback((note) => {
+        setUserNoteRaw(note);
+        const d = JSON.parse(sessionStorage.getItem('jansevaai_draft') || '{}');
+        sessionStorage.setItem('jansevaai_draft', JSON.stringify({ ...d, userNote: note }));
+    }, []);
+
     const reset = () => {
         previews.forEach((preview) => URL.revokeObjectURL(preview));
-        setStep(0);
+        setStepRaw(0);
         setImages([]);
         setPreviews([]);
         setAnalysis(null);
         setS3Keys([]);
         setResult(null);
-        setUserNote('');
+        setUserNoteRaw('');
         setError(null);
         setAnalysisProgress('');
+        sessionStorage.removeItem('jansevaai_draft');
     };
 
     const addImages = (files) => {
@@ -74,7 +90,7 @@ export function useComplaintSubmission(location) {
         setError(null);
 
         try {
-            const savedUser = JSON.parse(localStorage.getItem('JanSevaAI_user') || '{}');
+            const savedUser = JSON.parse(localStorage.getItem('jansevaai_user') || '{}');
             const res = await submitComplaint({
                 analysis,
                 userNote,

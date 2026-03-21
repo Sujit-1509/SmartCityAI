@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { Landmark } from 'lucide-react';
+import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import AppLayout from './components/Layout/AppLayout';
 import CitizenLayout from './components/Layout/CitizenLayout';
 import Home from './pages/Home/Home';
@@ -87,6 +88,7 @@ function App() {
 
     return (
         <HashRouter>
+        <ErrorBoundary>
             <Routes>
 
                 {/* ── Root ── */}
@@ -238,6 +240,7 @@ function App() {
                 />
 
             </Routes>
+        </ErrorBoundary>
         </HashRouter>
     );
 }

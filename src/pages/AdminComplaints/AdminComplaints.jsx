@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, CheckCircle, Clock, Users, ChevronDown, X, Filter, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Users, ChevronDown, X, Filter, RefreshCw, Download } from 'lucide-react';
 import {
     getComplaints,
     updateComplaintStatus,
@@ -233,6 +233,32 @@ export default function AdminComplaints() {
     };
     const hasFilters = filterStatus || filterSeverity || filterCategory || filterAssigned || search;
 
+    // ── CSV export ────────────────────────────────────────────────────────────
+    function exportCSV() {
+        const headers = ['Incident ID','Category','Severity','Priority Score','Status','Department','Assigned To','Address','Description','Submitted At'];
+        const rows = filtered.map(c => [
+            c.incident_id || '',
+            c.category || '',
+            c.severity || '',
+            c.priorityScore ?? '',
+            c.status || '',
+            c.department || '',
+            c.assigned_to_name || c.assigned_to || '',
+            `"${(c.address || '').replace(/"/g, '""')}"`,
+            `"${(c.description || '').replace(/"/g, '""')}"`,
+            c.timestamp || c.createdAt || '',
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `jansevaai-complaints-${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`Exported ${filtered.length} complaints to CSV`);
+    }
+
     return (
         <div className="admin-complaints">
 
@@ -300,6 +326,9 @@ export default function AdminComplaints() {
                         <>
                             <button className="btn-ghost" onClick={() => setBulkMode(true)}>
                                 <Users size={14} /> Bulk select
+                            </button>
+                            <button className="btn-ghost" onClick={exportCSV} title="Export filtered complaints as CSV">
+                                <Download size={14} /> Export CSV
                             </button>
                             <button className="btn-ghost" onClick={load}>
                                 <RefreshCw size={14} />

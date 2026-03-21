@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Upload,
@@ -45,6 +46,14 @@ const SubmitComplaint = () => {
 
     const handleFileChange = (e) => {
         addImages(e.target.files);
+    };
+
+    const [dragging, setDragging] = useState(false);
+    const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setDragging(true); };
+    const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setDragging(false); };
+    const handleDrop = (e) => {
+        e.preventDefault(); e.stopPropagation(); setDragging(false);
+        if (e.dataTransfer.files?.length) addImages(e.dataTransfer.files);
     };
 
     return (
@@ -100,8 +109,11 @@ const SubmitComplaint = () => {
                             <p className="text-muted">Take or upload up to 5 photos of the civic issue</p>
                             <button
                                 type="button"
-                                className="upload-zone"
+                                className={`upload-zone${dragging ? ' drag-over' : ''}`}
                                 onClick={() => document.getElementById('file-input').click()}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
                                 aria-label="Upload complaint photos"
                             >
                                 <input
