@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, Clock, Camera, BarChart2, AlertTriangle, RefreshCw, X } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Camera, BarChart2, AlertTriangle, RefreshCw, X, MapPin } from 'lucide-react';
 import {
     getComplaints,
     workerRespondToTask,
@@ -40,6 +40,8 @@ export default function Worker({ user }) {
     const [proofFile,    setProofFile]    = useState(null);
     const [proofNote,    setProofNote]    = useState('');
     const [resolveLoading, setResolveLoading] = useState(false);
+    const [resolveGps,   setResolveGps]   = useState(null); // { lat, lng } or null
+    const [gpsStatus,    setGpsStatus]    = useState(''); // 'fetching' | 'ok' | 'denied'
     const fileRef = useRef(null);
 
     // ── Toast ─────────────────────────────────────────────────────────────────
@@ -113,9 +115,9 @@ export default function Worker({ user }) {
         setResolveLoading(true);
         try {
             if (proofFile) {
-                await resolveWithProof(resolveModal.incident_id, proofFile, proofNote || 'Resolved with photo proof');
+                await resolveWithProof(resolveModal.incident_id, proofFile, proofNote || 'Resolved with photo proof', resolveGps);
             } else {
-                await updateComplaintStatus(resolveModal.incident_id, 'resolved', proofNote || 'Resolved');
+                await updateComplaintStatus(resolveModal.incident_id, 'resolved', proofNote || 'Resolved', resolveGps);
             }
             setTasks(prev => prev.map(t =>
                 t.incident_id === resolveModal.incident_id
@@ -126,6 +128,8 @@ export default function Worker({ user }) {
             setResolveModal(null);
             setProofFile(null);
             setProofNote('');
+            setResolveGps(null);
+            setGpsStatus('');
         } catch {
             showToast('Failed to resolve');
         } finally {
@@ -230,7 +234,22 @@ export default function Worker({ user }) {
                                             <button className="btn-resolve" onClick={() => handleSimpleResolve(task)}>
                                                 <CheckCircle size={14} /> Mark resolved
                                             </button>
-                                            <button className="btn-proof" onClick={() => { setResolveModal(task); setProofFile(null); setProofNote(''); }}>
+                                            <button className="btn-proof" onClick={() => {
+                                                setResolveModal(task);
+                                                setProofFile(null);
+                                                setProofNote('');
+                                                setResolveGps(null);
+                                                setGpsStatus('fetching');
+                                                if (navigator.geolocation) {
+                                                    navigator.geolocation.getCurrentPosition(
+                                                        pos => { setResolveGps({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGpsStatus('ok'); },
+                                                        () => setGpsStatus('denied'),
+                                                        { enableHighAccuracy: true, timeout: 8000 }
+                                                    );
+                                                } else {
+                                                    setGpsStatus('denied');
+                                                }
+                                            }}>
                                                 <Camera size={14} /> Resolve with photo
                                             </button>
                                         </>
@@ -373,6 +392,18 @@ export default function Worker({ user }) {
                             value={proofNote}
                             onChange={e => setProofNote(e.target.value)}
                         />
+
+                        {/* GPS status indicator */}
+                        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem' }}>
+                            <MapPin size={14} />
+                            {gpsStatus === 'fetching' && <span style={{ color: 'var(--color-text-warning)' }}>Acquiring GPS…</span>}
+                            {gpsStatus === 'ok' && resolveGps && (
+                                <span style={{ color: 'var(--color-text-success)' }}>
+                                    GPS locked: {resolveGps.lat.toFixed(5)}, {resolveGps.lng.toFixed(5)}
+                                </span>
+                            )}
+                            {gpsStatus === 'denied' && <span style={{ color: 'var(--color-text-danger)' }}>GPS unavailable — resolve will proceed without location</span>}
+                        </div>
 
                         <div className="modal-actions">
                             <button className="btn-ghost" onClick={() => setResolveModal(null)}>Cancel</button>

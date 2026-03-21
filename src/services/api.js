@@ -162,12 +162,14 @@ export async function submitComplaint(data) {
     }
 }
 
-export async function updateComplaintStatus(id, status, notes) {
+export async function updateComplaintStatus(id, status, notes, resolveLocation = null) {
     try {
-        const res = await api.patch(`/complaints/${id}/status`, {
+        const body = {
             status: normalizeStatus(status),
             notes,
-        });
+        };
+        if (resolveLocation) body.resolveLocation = resolveLocation;
+        const res = await api.patch(`/complaints/${id}/status`, body);
         return {
             ...res,
             updatedRecord: res.updatedRecord ? normalizeComplaint(res.updatedRecord) : null,
@@ -235,7 +237,7 @@ export async function workerRespondToTask(incidentId, action, note = '') {
 
 // ─── NEW: Upload resolution photo proof and resolve ──────────────────────────
 
-export async function resolveWithProof(incidentId, proofFile, note = '') {
+export async function resolveWithProof(incidentId, proofFile, note = '', resolveLocation = null) {
     try {
         // Get a presigned URL for the proof photo
         const presign = await getUploadUrl(
@@ -251,15 +253,17 @@ export async function resolveWithProof(incidentId, proofFile, note = '') {
         await uploadToS3(presign.upload_url, proofFile);
 
         // Now resolve with the proof S3 key attached
-        const res = await api.patch(`/complaints/${incidentId}/status`, {
+        const patchBody = {
             status:     'resolved',
             proofS3Key: presign.s3_key,
             notes:      note || 'Resolved with photo proof',
-        });
+        };
+        if (resolveLocation) patchBody.resolveLocation = resolveLocation;
+        const res = await api.patch(`/complaints/${incidentId}/status`, patchBody);
         return { ...res, proofS3Key: presign.s3_key };
     } catch (err) {
         console.warn('Resolve with proof failed, falling back to simple resolve:', err.message);
-        return await updateComplaintStatus(incidentId, 'resolved', note);
+        return await updateComplaintStatus(incidentId, 'resolved', note, resolveLocation);
     }
 }
 

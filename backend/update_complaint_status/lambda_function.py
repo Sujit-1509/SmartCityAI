@@ -87,6 +87,7 @@ def lambda_handler(event, context):
     note            = body.get('notes') or body.get('note', '')
     worker_action   = (body.get('workerAction') or '').lower()   # 'accepted' | 'rejected'
     proof_s3_key    = body.get('proofS3Key', '')                  # S3 key of resolution photo
+    resolve_location = body.get('resolveLocation')                # { lat, lng } GPS coords
 
     # Validate status
     if new_status and new_status not in VALID_STATUSES:
@@ -112,6 +113,8 @@ def lambda_handler(event, context):
         history_entry['proof_s3_key'] = proof_s3_key
     if worker_action:
         history_entry['worker_action'] = worker_action
+    if resolve_location:
+        history_entry['resolve_location'] = resolve_location
 
     # Build DynamoDB update expression dynamically
     update_parts = [
@@ -136,6 +139,10 @@ def lambda_handler(event, context):
     if new_status in ('resolved', 'closed'):
         update_parts.append('resolved_at = :rat')
         expr_vals[':rat'] = now_iso
+
+    if resolve_location and isinstance(resolve_location, dict):
+        update_parts.append('resolve_location = :rloc')
+        expr_vals[':rloc'] = resolve_location
 
     table = dynamodb.Table(TABLE_NAME)
     try:
