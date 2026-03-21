@@ -10,6 +10,7 @@ export function useComplaintSubmission(location) {
     const [result, setResult] = useState(null);
     const [userNote, setUserNote] = useState('');
     const [analyzing, setAnalyzing] = useState(false);
+    const [analysisProgress, setAnalysisProgress] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
@@ -23,6 +24,7 @@ export function useComplaintSubmission(location) {
         setResult(null);
         setUserNote('');
         setError(null);
+        setAnalysisProgress('');
     };
 
     const addImages = (files) => {
@@ -48,10 +50,13 @@ export function useComplaintSubmission(location) {
 
         setStep(2);
         setAnalyzing(true);
+        setAnalysisProgress('uploading');
         setError(null);
 
         try {
-            const res = await analyzeImages(images);
+            const res = await analyzeImages(images, (stage) => {
+                setAnalysisProgress(stage);
+            });
             setAnalysis(res.analysis);
             setS3Keys(res.s3Keys || []);
             setStep(3);
@@ -60,6 +65,7 @@ export function useComplaintSubmission(location) {
             setStep(1);
         } finally {
             setAnalyzing(false);
+            setAnalysisProgress('');
         }
     };
 
@@ -99,6 +105,7 @@ export function useComplaintSubmission(location) {
         userNote,
         setUserNote,
         analyzing,
+        analysisProgress,
         submitting,
         error,
         setError,

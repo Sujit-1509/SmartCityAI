@@ -32,6 +32,7 @@ const SubmitComplaint = () => {
         userNote,
         setUserNote,
         analyzing,
+        analysisProgress,
         submitting,
         error,
         setError,
@@ -196,14 +197,18 @@ const SubmitComplaint = () => {
                             <h2>AI is Analyzing...</h2>
                             <p className="text-muted">Our AI engine is detecting issues in your photo</p>
                             <div className="analysis-steps">
-                                <div className="a-step done">
-                                    <CheckCircle size={14} /> Uploading image
+                                <div className={`a-step ${analysisProgress ? 'done' : 'active'}`}>
+                                    {analysisProgress ? <CheckCircle size={14} /> : <Loader2 size={14} className="spin-icon" />} Uploading image
                                 </div>
-                                <div className="a-step active">
-                                    <Loader2 size={14} className="spin-icon" /> Detecting issue type...
+                                <div className={`a-step ${['severity','description'].some(s => analysisProgress === s) ? 'done' : analysisProgress === 'detecting' ? 'active' : ''}`}>
+                                    {['severity','description'].some(s => analysisProgress === s) ? <CheckCircle size={14} /> : analysisProgress === 'detecting' ? <Loader2 size={14} className="spin-icon" /> : null} Detecting issue type...
                                 </div>
-                                <div className="a-step">Assessing severity...</div>
-                                <div className="a-step">Generating description...</div>
+                                <div className={`a-step ${analysisProgress === 'description' ? 'done' : analysisProgress === 'severity' ? 'active' : ''}`}>
+                                    {analysisProgress === 'description' ? <CheckCircle size={14} /> : analysisProgress === 'severity' ? <Loader2 size={14} className="spin-icon" /> : null} Assessing severity...
+                                </div>
+                                <div className={`a-step ${analysisProgress === 'description' ? 'active' : ''}`}>
+                                    {analysisProgress === 'description' ? <Loader2 size={14} className="spin-icon" /> : null} Generating description...
+                                </div>
                             </div>
                         </div>
                     )}

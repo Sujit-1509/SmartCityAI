@@ -335,7 +335,7 @@ export async function getUploadUrl(fileName, fileType, incidentId = null, imageI
     }
 }
 
-export async function analyzeImages(imageFiles) {
+export async function analyzeImages(imageFiles, onProgress) {
     try {
         const primary        = imageFiles[0];
         const primaryPresign = await getUploadUrl(primary.name, primary.type);
@@ -345,6 +345,7 @@ export async function analyzeImages(imageFiles) {
         const s3Keys     = [primaryPresign.s3_key];
 
         await uploadToS3(primaryPresign.upload_url, primary);
+        if (onProgress) onProgress('uploaded');
 
         const secondaryFiles = imageFiles.slice(1);
         if (secondaryFiles.length > 0) {
@@ -361,7 +362,7 @@ export async function analyzeImages(imageFiles) {
             s3Keys.push(...keys.filter(Boolean));
         }
 
-        const result = await pollForResult(incidentId);
+        const result = await pollForResult(incidentId, onProgress);
         if (!result) throw new Error('Processing timed out');
 
         return _buildAnalysisResult(result, s3Keys, incidentId);
@@ -385,9 +386,16 @@ export async function analyzeImage(imageFile) {
     }
 }
 
-async function pollForResult(incidentId) {
-    for (let i = 0; i < 20; i++) {
-        await new Promise(r => setTimeout(r, 3000));
+async function pollForResult(incidentId, onProgress) {
+    // Faster initial polls (2s), max 15 attempts = 30s total
+    for (let i = 0; i < 15; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        // Progress feedback to UI
+        if (onProgress) {
+            if (i >= 1) onProgress('detecting');
+            if (i >= 3) onProgress('severity');
+            if (i >= 6) onProgress('description');
+        }
         try {
             const res  = await api.get(`/complaints/${incidentId}`);
             const item = res?.complaint || res || {};
