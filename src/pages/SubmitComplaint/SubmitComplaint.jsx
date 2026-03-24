@@ -105,8 +105,15 @@ const SubmitComplaint = () => {
 
                     {step === 0 && (
                         <div className="step-content animate-fade-in">
-                            <h2>Upload Photos</h2>
-                            <p className="text-muted">Take or upload up to 5 photos of the civic issue</p>
+                            <h2>
+                                Upload Photos
+                                {images.length > 0 && (
+                                    <span className="badge badge-info" style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}>
+                                        {images.length} / 5
+                                    </span>
+                                )}
+                            </h2>
+                            <p className="text-muted">Take or upload up to 5 photos of the civic issue — AI will analyze them all</p>
                             <button
                                 type="button"
                                 className={`upload-zone${dragging ? ' drag-over' : ''}`}
@@ -208,7 +215,7 @@ const SubmitComplaint = () => {
                                 <Cpu size={28} className="ai-icon-svg" />
                             </div>
                             <h2>AI is Analyzing...</h2>
-                            <p className="text-muted">Our AI engine is detecting issues in your photo</p>
+                            <p className="text-muted">Our AI engine is analyzing {images.length} photo{images.length !== 1 ? 's' : ''} to detect the civic issue</p>
                             <div className="analysis-steps">
                                 <div className={`a-step ${analysisProgress ? 'done' : 'active'}`}>
                                     {analysisProgress ? <CheckCircle size={14} /> : <Loader2 size={14} className="spin-icon" />} Uploading image
@@ -230,6 +237,21 @@ const SubmitComplaint = () => {
                         <div className="step-content animate-fade-in">
                             <h2>AI Analysis Results</h2>
                             <p className="text-muted">Review the automated analysis before submitting</p>
+
+                            {/* Multi-photo strip */}
+                            {previews.length > 0 && (
+                                <div className="review-photo-strip">
+                                    {previews.map((src, i) => (
+                                        <div key={src} className="review-photo-thumb">
+                                            <img src={src} alt={`Photo ${i + 1}`} />
+                                            {i === 0 && (
+                                                <span className="review-photo-label">Primary</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
                             <div className="analysis-card card">
                                 <div className="analysis-row">
                                     <span className="analysis-label">Category</span>

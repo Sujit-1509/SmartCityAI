@@ -189,3 +189,56 @@
   .analysis-grid { grid-template-columns: 1fr; }
   .submit-page { padding-top: calc(var(--top-offset) + var(--space-md)); }
 }
+
+/* ─── Multi-photo review strip ─── */
+.review-photo-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  margin-bottom: var(--space-md);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-medium) transparent;
+}
+
+.review-photo-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid var(--border-medium);
+}
+
+.review-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.review-photo-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 0 3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.badge-info {
+  background: var(--primary-muted, rgba(99,102,241,0.15));
+  color: var(--primary-light, #818cf8);
+  border: 1px solid var(--primary-muted, rgba(99,102,241,0.25));
+  border-radius: 99px;
+  padding: 2px 8px;
+  font-weight: 700;
+}
+
