@@ -25,13 +25,19 @@ const AdminWorkers = () => {
 
     const fetchWorkers = async () => {
         setLoading(true);
-        const res = await getWorkers();
-        if (res.success) {
-            setWorkers(res.workers || []);
-        } else {
-            showToast('Failed to load workers', 'error');
+        try {
+            const res = await getWorkers();
+            if (res.success) {
+                setWorkers(res.workers || []);
+            } else {
+                showToast('Failed to load workers', 'error');
+            }
+        } catch (err) {
+            console.error('Fetch workers failed:', err);
+            showToast('Error loading workers roster', 'error');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleAddWorker = async (e) => {

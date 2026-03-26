@@ -28,6 +28,9 @@ export default function Analytics() {
     useEffect(() => {
         getComplaints()
             .then(res => setComplaints(res.complaints || []))
+            .catch(err => {
+                console.error('Analytics load failed:', err);
+            })
             .finally(() => setLoading(false));
     }, []);
 

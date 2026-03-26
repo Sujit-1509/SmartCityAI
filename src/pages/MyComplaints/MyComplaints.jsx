@@ -20,12 +20,16 @@ const MyComplaints = () => {
             f.phone = savedUser.userPhone;
         }
         setLoading(true);
-        getComplaints(f).then((res) => {
-            const arr = res.complaints || [];
-            arr.sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0));
-            setComplaints(arr);
-            setLoading(false);
-        });
+        getComplaints(f)
+            .then((res) => {
+                const arr = res.complaints || [];
+                arr.sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0));
+                setComplaints(arr);
+            })
+            .catch(err => {
+                console.error('My complaints load failed:', err);
+            })
+            .finally(() => setLoading(false));
     }, [filter, categoryFilter]);
 
     const handleDelete = async (e, id) => {

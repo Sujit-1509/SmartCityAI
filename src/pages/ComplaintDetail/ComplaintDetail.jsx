@@ -82,12 +82,17 @@ const ComplaintDetail = () => {
     const backLink = canUpdateStatus ? '/complaints' : '/my-complaints';
 
     useEffect(() => {
-        getComplaintById(id).then(res => {
-            const data = res.complaint || res;
-            setComplaint(data);
-            setUpvotes(data.upvotes || 0);
-            setLoading(false);
-        });
+        getComplaintById(id)
+            .then(res => {
+                const data = res.complaint || res;
+                setComplaint(data);
+                setUpvotes(data.upvotes || 0);
+            })
+            .catch(err => {
+                console.error('Fetch complaint failed:', err);
+                showToast('Could not load complaint details');
+            })
+            .finally(() => setLoading(false));
     }, [id]);
 
     if (loading)

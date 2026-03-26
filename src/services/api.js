@@ -528,6 +528,7 @@ export async function getDashboardStats() {
         const complaints = res.complaints || [];
         return { success: true, stats: computeStats(complaints) };
     } catch (err) {
+        if (!ENABLE_MOCK_FALLBACK) throw err;
         console.warn('Stats computation failed, using mock:', err.message);
         return { success: true, stats: mockDashboardStats };
     }
