@@ -47,6 +47,7 @@ Citizens authenticate via OTP (SMS) and can track their complaints in real-time.
 | **Premium UI Design** | Built on **Design System v3** (Glassmorphism, gradients, modern utility classes) |
 | **Photo-Based Reporting** | Upload a photo → AI detects potholes, garbage, broken lights, waterlogging |
 | **YOLOv8 Vision AI** | Custom-trained model with robust issue detection + confidence scoring |
+| **Eco-Mode AI Fallback** | Automatic zero-downtime degradation to Amazon Bedrock (Nova Lite) if the primary EC2 Vision Server is unreachable, ensuring continuous operation at zero compute cost. |
 | **LLM Descriptions** | Amazon Bedrock (Claude) generates formal complaint text automatically |
 | **GPS Auto-Detect** | Real-time location tagging with coordinates |
 | **GPS Proof-of-Work** | Workers capture geolocation at resolve-time to prove on-site resolution |
@@ -99,11 +100,13 @@ Citizens authenticate via OTP (SMS) and can track their complaints in real-time.
          │ Image λ   │
          └─────┬─────┘
                │
-      ┌────────┴────────┐
-      ▼                 ▼
+    ╔══════════╧══════════╗
+    ║      AI ROUTER      ║
+    ╚═══╦═════════════╦═══╝
+(Primary) ▼           ▼ (Fallback "Eco-Mode")
   ┌────────┐      ┌──────────┐
   │ EC2    │      │ Bedrock  │
-  │ YOLOv8 │      │ (Claude) │
+  │ YOLOv8 │      │ (Nova)   │
   └────────┘      └──────────┘
 ```
 
@@ -113,10 +116,11 @@ Citizens authenticate via OTP (SMS) and can track their complaints in real-time.
 2. Frontend requests a **presigned S3 URL** from the Upload Lambda
 3. Image is uploaded **directly to S3** (bypasses Lambda payload limits)
 4. S3 ObjectCreated event triggers the **Process Image Lambda**
-5. Process Image Lambda calls **YOLOv8** on EC2 for classification
-6. **Severity** is calculated, **department** is mapped, and **Bedrock** generates a description
-7. Result is saved to **DynamoDB** and admin is notified via **SES**
-8. Citizen finalizes with notes/GPS via the **Submit Complaint Lambda**
+5. Process Image Lambda calls **YOLOv8** on EC2 for primary classification
+6. If EC2 is offline (Cost Optimization), Lambda automatically falls back to **Amazon Bedrock (Nova Lite)** for fallback classification.
+7. **Severity** is calculated, **department** is mapped, and **Bedrock (Claude)** generates a description
+8. Result is saved to **DynamoDB** and admin is notified via **SES**
+9. Citizen finalizes with notes/GPS via the **Submit Complaint Lambda**
 
 ---
 
@@ -134,7 +138,8 @@ Citizens authenticate via OTP (SMS) and can track their complaints in real-time.
 | **Storage** | Amazon S3 (image storage) |
 | **Auth** | AWS SNS / Amazon Pinpoint (SMS OTP) |
 | **AI/ML** | YOLOv8 (custom-trained) on EC2 |
-| **LLM** | Amazon Bedrock (Claude 3 Haiku) |
+| **LLM (Fallback)** | Amazon Bedrock (Nova Lite Vision) |
+| **LLM (Text)** | Amazon Bedrock (Claude 3 Haiku) |
 | **Email** | Amazon SES |
 
 ---
@@ -269,10 +274,11 @@ Detailed setup guides for each AWS service:
 ## Security
 
 - **Authentication**: Phone-based OTP via AWS SNS
-- **Authorization**: JWT tokens with 7-day expiry
-- **API Security**: API Gateway with CORS headers
-- **Data Privacy**: User complaints are filtered by phone number — users only see their own data
-- **Infrastructure**: All services run within AWS with IAM-scoped permissions
+- **Role-Based Access Control (RBAC)**: Secure multi-tenant architecture strictly routes authenticated JWT users to specific views (Citizen, Admin, Worker) while enforcing permission constraints in Lambdas.
+- **Authorization**: JSON Web Tokens (JWT) using shared secrets with AWS KMS enforcement
+- **API Security**: API Gateway with secure CORS headers and preflight validations
+- **Data Privacy**: User complaints are horizontally filtered by phone number — users only retrieve their own datasets.
+- **Infrastructure**: All services run internally within AWS utilizing IAM-scoped execution roles for principle of least privilege.
 
 ---
 
