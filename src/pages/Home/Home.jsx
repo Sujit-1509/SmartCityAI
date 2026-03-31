@@ -10,21 +10,37 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: '—', resolutionRate: '—', avgResponseTime: '—', departments: '—' });
     useEffect(() => {
-        getNearbyComplaints(18.52, 73.85).then((res) => {
-            setNearby(res.complaints);
-            setLoading(false);
-        });
-        getDashboardStats().then((res) => {
-            if (res.success && res.stats) {
-                const s = res.stats;
-                setStats({
-                    total: (s.totalComplaints ?? s.total ?? 0).toLocaleString('en-IN'),
-                    resolutionRate: `${s.resolutionRate ?? 0}%`,
-                    avgResponseTime: s.avgResponseTime ?? '—',
-                    departments: Object.keys(s.categoryBreakdown || {}).length || 4,
-                });
-            }
-        });
+        getNearbyComplaints(18.52, 73.85)
+            .then((res) => {
+                setNearby(res.complaints || []);
+            })
+            .catch((err) => {
+                console.error('Nearby complaints load failed:', err);
+                setNearby([]);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+
+        getDashboardStats()
+            .then((res) => {
+                if (res.success && res.stats) {
+                    const s = res.stats;
+                    setStats({
+                        total: (s.totalComplaints ?? s.total ?? 0).toLocaleString('en-IN'),
+                        resolutionRate: `${s.resolutionRate ?? 0}%`,
+                        avgResponseTime: s.avgResponseTime ?? '—',
+                        departments: Array.isArray(s.departmentPerformance)
+                            ? s.departmentPerformance.length
+                            : Array.isArray(s.categoryBreakdown)
+                                ? s.categoryBreakdown.length
+                                : 4,
+                    });
+                }
+            })
+            .catch((err) => {
+                console.error('Home dashboard stats load failed:', err);
+            });
     }, []);
     return (
         <div className="home-page">
@@ -157,7 +173,7 @@ const Home = () => {
                                     </div>
                                     <p className="cc-desc">{c.description}</p>
                                     <div className="cc-meta">
-                                        <span className="cc-meta-item"><MapPin size={13} /> {c.address.split(',')[0]}</span>
+                                        <span className="cc-meta-item"><MapPin size={13} /> {(c.address || 'Location pending').split(',')[0]}</span>
                                         <span className="cc-meta-item"><TrendingUp size={12} /> {c.upvotes}</span>
                                         <TimeAgo date={c.createdAt} />
                                     </div>

@@ -10,6 +10,28 @@ import {
 } from '../../services/api';
 import './Worker.css';
 
+function normalizePhone(value) {
+    const digits = String(value || '').replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.length === 10) return `91${digits}`;
+    if (digits.length === 12 && digits.startsWith('91')) return digits;
+    return digits;
+}
+
+function isComplaintForWorker(complaint, workerPhone) {
+    const workerNorm = normalizePhone(workerPhone);
+    if (!workerNorm) return false;
+
+    const candidatePhones = [
+        complaint.assigned_to,
+        complaint.assignedTo,
+        complaint.worker_phone,
+        complaint.workerPhone,
+    ];
+
+    return candidatePhones.some((phone) => normalizePhone(phone) === workerNorm);
+}
+
 function slaStatus(c) {
     if (!c.sla_deadline) return null;
     const ms = new Date(c.sla_deadline).getTime() - Date.now();
@@ -63,7 +85,7 @@ export default function Worker({ user }) {
             ]);
             const all   = complRes.complaints || [];
             const mine  = workerPhone
-                ? all.filter(c => c.assigned_to === workerPhone)
+                ? all.filter(c => isComplaintForWorker(c, workerPhone))
                 : all.filter(c => ['assigned','in_progress'].includes(c.status));
             // Sort: urgent SLA first, then by priority
             mine.sort((a, b) => {
@@ -74,6 +96,20 @@ export default function Worker({ user }) {
             });
             setTasks(mine);
             setStats(statsRes);
+        } catch (err) {
+            console.error('Worker dashboard load failed:', err);
+            setTasks([]);
+            setStats({
+                total: 0,
+                resolved: 0,
+                active: 0,
+                pending: 0,
+                rejected: 0,
+                avgResolutionHours: null,
+                slaComplianceRate: 100,
+                recentResolved: [],
+            });
+            showToast('Could not load worker tasks right now');
         } finally {
             setLoading(false);
         }

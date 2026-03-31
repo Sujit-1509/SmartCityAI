@@ -36,16 +36,17 @@ const MyComplaints = () => {
         e.preventDefault();
         e.stopPropagation();
         if (window.confirm("Are you sure you want to delete this complaint? This cannot be undone.")) {
-            // Optimistic update
+            const previousComplaints = complaints;
             setComplaints(prev => prev.filter(c => c.incident_id !== id));
             try {
                 const res = await deleteComplaint(id);
                 if (!res.success) {
                     console.error("Failed to delete complaint from server.");
-                    // In a real app, we might refetch here
+                    setComplaints(previousComplaints);
                 }
             } catch (err) {
                 console.error('Delete failed:', err);
+                setComplaints(previousComplaints);
             }
         }
     };

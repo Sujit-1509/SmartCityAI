@@ -31,6 +31,24 @@ const Dashboard = () => {
             setStats(statsRes.stats);
             setComplaints(complaintsRes.complaints || []);
             setSlaData({ breached: slaRes.breached || [], warning: slaRes.warning || [] });
+        }).catch((err) => {
+            console.error('Dashboard load failed:', err);
+            setStats({
+                totalComplaints: 0,
+                activeComplaints: 0,
+                resolvedToday: 0,
+                pendingTriage: 0,
+                resolutionRate: 0,
+                avgResponseTime: '0 days',
+                slaAdherence: 100,
+                slaBreached: 0,
+                categoryBreakdown: [],
+                monthlyTrends: [],
+                departmentPerformance: [],
+            });
+            setComplaints([]);
+            setSlaData({ breached: [], warning: [] });
+        }).finally(() => {
             setLoading(false);
         });
     }, []);

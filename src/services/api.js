@@ -6,7 +6,8 @@ import {
     normalizeStatus,
 } from './complaintModel';
 
-const ENABLE_MOCK_FALLBACK = import.meta.env.VITE_ENABLE_MOCK_FALLBACK === 'true';
+const ENABLE_MOCK_FALLBACK =
+    import.meta.env.VITE_ENABLE_MOCK_FALLBACK === 'true' || !import.meta.env.PROD;
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
@@ -34,12 +35,113 @@ export async function verifyOtp(phone, otp, role = 'citizen') {
 
 // ─── Workers (Admin) ─────────────────────────────────────────────────────────
 
+function normalizeWorkerPhone(phone) {
+    const raw = String(phone || '').trim();
+    if (!raw) return '';
+    if (raw.startsWith('+')) return raw;
+
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length === 10) return `+91${digits}`;
+    if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+    return raw;
+}
+
+function normalizeWorkerPhoneForMatch(phone) {
+    const digits = String(phone || '').replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.length === 10) return `91${digits}`;
+    if (digits.length === 12 && digits.startsWith('91')) return digits;
+    return digits;
+}
+
+function complaintMatchesWorkerPhone(complaint, workerPhone) {
+    const workerNorm = normalizeWorkerPhoneForMatch(workerPhone);
+    if (!workerNorm) return false;
+
+    const candidates = [
+        complaint.assigned_to,
+        complaint.assignedTo,
+        complaint.worker_phone,
+        complaint.workerPhone,
+    ];
+
+    return candidates.some((value) => normalizeWorkerPhoneForMatch(value) === workerNorm);
+}
+
+function buildDerivedWorkersFromComplaints(complaints = []) {
+    const byPhone = new Map();
+
+    complaints.forEach((c) => {
+        const phone = normalizeWorkerPhone(c.assigned_to || c.assignedTo || '');
+        if (!phone) return;
+
+        const name = (c.assigned_to_name || c.assignedToName || '').trim() || `Worker ${phone.slice(-4)}`;
+        const existing = byPhone.get(phone);
+        if (existing) {
+            // Keep latest timestamp when multiple complaints reference same worker.
+            if ((c.timestamp || c.createdAt || '') > (existing.created_at || '')) {
+                existing.created_at = c.timestamp || c.createdAt || existing.created_at;
+            }
+            return;
+        }
+
+        byPhone.set(phone, {
+            phone,
+            name,
+            department: c.department || 'General',
+            created_at: c.timestamp || c.createdAt || '',
+            source: 'complaints',
+        });
+    });
+
+    return [...byPhone.values()];
+}
+
+function mergeWorkers(primary = [], secondary = []) {
+    const merged = new Map();
+
+    [...primary, ...secondary].forEach((worker) => {
+        const phone = normalizeWorkerPhone(worker.phone);
+        if (!phone) return;
+
+        const existing = merged.get(phone);
+        const normalized = {
+            ...worker,
+            phone,
+            name: worker.name || existing?.name || `Worker ${phone.slice(-4)}`,
+            department: worker.department || existing?.department || 'General',
+            created_at: worker.created_at || existing?.created_at || '',
+        };
+
+        merged.set(phone, normalized);
+    });
+
+    return [...merged.values()].sort((a, b) =>
+        String(b.created_at || '').localeCompare(String(a.created_at || ''))
+    );
+}
+
 export async function getWorkers() {
     try {
-        return await api.get('/workers');
+        const [workerRes, complaintsRes] = await Promise.all([
+            api.get('/workers'),
+            getComplaints().catch(() => ({ complaints: [] })),
+        ]);
+
+        const apiWorkers = workerRes.workers || [];
+        const derivedWorkers = buildDerivedWorkersFromComplaints(complaintsRes.complaints || []);
+
+        return {
+            ...workerRes,
+            success: workerRes.success !== false,
+            workers: mergeWorkers(apiWorkers, derivedWorkers),
+        };
     } catch (err) {
         console.error('API Error in getWorkers:', err.message);
-        if (ENABLE_MOCK_FALLBACK) return { success: true, workers: [] };
+        if (ENABLE_MOCK_FALLBACK) {
+            const derivedWorkers = buildDerivedWorkersFromComplaints(normalizeComplaintList(mockComplaints));
+            return { success: true, workers: derivedWorkers };
+        }
         throw err;
     }
 }
@@ -213,8 +315,15 @@ export async function assignComplaint(incidentId, workerPhone, workerName, note 
             note,
         });
     } catch (err) {
-        console.error('Assign API failed:', err.message);
-        throw err;
+        if (!ENABLE_MOCK_FALLBACK) throw err;
+        console.warn('Assign API failed, using mock assignment:', err.message);
+        return {
+            success: true,
+            incident_id: incidentId,
+            assigned_to: workerPhone,
+            assigned_to_name: workerName,
+            status: 'assigned',
+        };
     }
 }
 
@@ -231,8 +340,17 @@ export async function bulkUpdateComplaints({ incidentIds, action, status, worker
             note,
         });
     } catch (err) {
-        console.error('Bulk update API failed:', err.message);
-        throw err;
+        if (!ENABLE_MOCK_FALLBACK) throw err;
+        console.warn('Bulk update API failed, using mock response:', err.message);
+        return {
+            success: true,
+            updated_count: incidentIds.length,
+            failed_count: 0,
+            results: {
+                updated: incidentIds,
+                failed: [],
+            },
+        };
     }
 }
 
@@ -325,7 +443,7 @@ export async function getWorkerStats(workerPhone) {
     try {
         const res = await getComplaints();
         const all  = res.complaints || [];
-        const mine = all.filter(c => c.assigned_to === workerPhone);
+        const mine = all.filter(c => complaintMatchesWorkerPhone(c, workerPhone));
 
         const resolved  = mine.filter(c => ['resolved', 'closed'].includes(c.status));
         const active    = mine.filter(c => c.status === 'in_progress');
