@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Phone, Shield, Loader2, User, BarChart3, HardHat } from 'lucide-react';
 import { login, verifyOtp } from '../../services/api';
 import './Login.css';
+
+const useLocalAuth = import.meta.env.VITE_USE_LOCAL_AUTH === 'true';
 const roles = [
     { id: 'citizen', label: 'Citizen', icon: <User size={18} />, desc: 'Report & track civic issues' },
     { id: 'admin', label: 'Administrator', icon: <BarChart3 size={18} />, desc: 'Manage complaints' },
@@ -24,6 +26,21 @@ const Login = ({ onLogin }) => {
         if (phone.length < 10) return;
         setLoading(true);
         try {
+            // Magic bypass for 0000000000: automatic login
+            if (phone === '0000000000') {
+                const magicName = name.trim() || 'Magic User';
+                const res = await verifyOtp('+910000000000', '123456', selectedRole, magicName);
+                if (res.success) {
+                    const userData = { ...res.user, name: magicName, phone: '+91' + phone, role: selectedRole };
+                    localStorage.setItem('jansevaai_user', JSON.stringify(userData));
+                    onLogin(userData);
+                    if (selectedRole === 'citizen') navigate('/');
+                    else if (selectedRole === 'admin') navigate('/dashboard');
+                    else navigate('/worker');
+                }
+                return;
+            }
+
             await login('+91' + phone);
             setOtpSent(true);
         } catch (err) {
@@ -38,7 +55,7 @@ const Login = ({ onLogin }) => {
         setError(null);
         setLoading(true);
         try {
-            const res = await verifyOtp('+91' + phone, otp, selectedRole);
+            const res = await verifyOtp('+91' + phone, otp, selectedRole, name.trim());
             if (res.success) {
                 // Token is stored in localStorage by the api.js verifyOtp function
                 const userData = { ...res.user, name, phone: '+91' + phone, role: selectedRole };
@@ -145,7 +162,16 @@ const Login = ({ onLogin }) => {
                     </form>
                 )}
                 <p className="login-demo text-sm text-muted">
-                    Demo: Enter any 10-digit number and OTP <code>123456</code>
+                    {useLocalAuth ? (
+                        <>
+                            <strong>Local JWT auth</strong> — no API calls. OTP <code>123456</code> mints a Cognito-shaped
+                            HS256 token (see <code>VITE_LOCAL_JWT_SECRET</code> in <code>.env.example</code>).
+                        </>
+                    ) : (
+                        <>
+                            Demo: Enter any 10-digit number and OTP <code>123456</code>
+                        </>
+                    )}
                 </p>
             </div>
         </div>

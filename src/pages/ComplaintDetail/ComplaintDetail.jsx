@@ -243,14 +243,44 @@ const ComplaintDetail = () => {
                                 <SeverityBadge severity={c.severity} />
                             </div>
 
-                            {imageUrl && (
-                                <div style={{ margin: 'var(--space-md) 0', borderRadius: 12, overflow: 'hidden' }}>
-                                    <img
-                                        src={imageUrl}
-                                        alt="Complaint"
-                                        style={{ width: '100%', maxHeight: 400, objectFit: 'cover', borderRadius: 12 }}
-                                    />
+                            {/* ── AI Verification & Photos ─────────────────────────────────────────── */}
+                            {proofUrl ? (
+                                <div className="verification-section">
+                                    {c.verification_status && (
+                                        <div className={`verification-badge status-${c.verification_status}`}>
+                                            {c.verification_status === 'verified' && <><CheckCircle size={14} /> AI Verified Fix</>}
+                                            {c.verification_status === 'suspicious' && <><AlertCircle size={14} /> Suspicious Resolution</>}
+                                            {c.verification_status === 'pending_review' && <><Clock size={14} /> Verification Pending</>}
+                                            {c.verification_details?.confidence && (
+                                                <span className="conf-score"> ({(c.verification_details.confidence * 100).toFixed(0)}% confidence)</span>
+                                            )}
+                                        </div>
+                                    )}
+                                    {c.verification_details?.summary && (
+                                        <p className="verification-summary">{c.verification_details.summary}</p>
+                                    )}
+                                    
+                                    <div className="proof-photos-grid">
+                                        <div className="photo-panel">
+                                            <span className="photo-label">Before</span>
+                                            <img src={imageUrl} alt="Before" className="proof-img" />
+                                        </div>
+                                        <div className="photo-panel">
+                                            <span className="photo-label">After</span>
+                                            <img src={proofUrl} alt="After" className="proof-img" />
+                                        </div>
+                                    </div>
                                 </div>
+                            ) : (
+                                imageUrl && (
+                                    <div style={{ margin: 'var(--space-md) 0', borderRadius: 12, overflow: 'hidden' }}>
+                                        <img
+                                            src={imageUrl}
+                                            alt="Complaint"
+                                            style={{ width: '100%', maxHeight: 400, objectFit: 'cover', borderRadius: 12 }}
+                                        />
+                                    </div>
+                                )
                             )}
 
                             <p className="detail-desc">{c.description}</p>

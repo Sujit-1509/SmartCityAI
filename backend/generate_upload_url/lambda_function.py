@@ -83,7 +83,10 @@ def lambda_handler(event, context):
     incident_id = body.get("incidentId") or str(uuid.uuid4())
 
     extension = _get_extension(file_type)
-    s3_key = f"complaints/{incident_id}_{image_index}{extension}"
+    if image_index == 99:
+        s3_key = f"resolutions/{incident_id}_99{extension}"
+    else:
+        s3_key = f"complaints/{incident_id}_{image_index}{extension}"
 
     logger.info(
         "Generating presigned URL — bucket=%s key=%s type=%s",

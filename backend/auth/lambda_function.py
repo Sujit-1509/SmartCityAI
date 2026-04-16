@@ -117,6 +117,10 @@ def handle_send_otp(body):
         logger.error(f"DynamoDB Error: {e}")
         return _response(500, {"error": "Database error"})
 
+    if phone == '+910000000000':
+        logger.info("Magic bypass triggered for 0000000000. Skipping SNS.")
+        return _response(200, {"success": True, "message": "Magic bypass active. Use OTP 123456."})
+
     try:
         sns_client.publish(
             PhoneNumber=phone,
@@ -151,8 +155,8 @@ def handle_verify_otp(body):
     if not phone.startswith('+'):
         phone = '+91' + phone[-10:]
 
-    # demo OTP bypass — only active when env var DEMO_OTP_ENABLED=true
-    is_demo_login = DEMO_OTP_ENABLED and str(user_otp) == "123456"
+    # demo OTP bypass — active if DEMO_OTP_ENABLED=true, or always active for magic bypass number
+    is_demo_login = (DEMO_OTP_ENABLED and str(user_otp) == "123456") or (phone == '+910000000000' and str(user_otp) == "123456")
 
     item = None
     if not is_demo_login:

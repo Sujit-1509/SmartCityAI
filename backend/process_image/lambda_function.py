@@ -148,19 +148,57 @@ def lambda_handler(event, context):
     except Exception:
         pass
 
-    # 2. YOLO inference
-    yolo_result = call_yolo(bucket, key)
-    category = yolo_result["category"]
-    confidence = yolo_result["confidence"]
+    # 2. AI Pipeline: Sanitization & Classification
+    is_spam = False
+    rejection_reason = ""
+    category = "Unknown"
+    confidence = 0.0
 
-    # 2b. vision fallback when YOLO returns Unknown
-    if category == "Unknown" or confidence == 0.0:
-        logger.info("YOLO returned Unknown, falling back to Amazon Nova Vision")
-        fallback_result = classify_with_nova(bucket, key)
-        if fallback_result["category"] != "Unknown":
-            category = fallback_result["category"]
-            confidence = fallback_result["confidence"]
-            logger.info("Nova fallback succeeded — category=%s confidence=%.2f", category, confidence)
+    # Step A: YOLO Primary Inference
+    yolo_result = call_yolo(bucket, key)
+    yolo_cat = yolo_result["category"]
+    yolo_conf = yolo_result["confidence"]
+
+    # Step B: AI Sanitization & Fallback
+    # If YOLO isn't extremely confident (>75%), OR YOLO returned Unknown, 
+    # we run the image through Nova to verify it's not spam/irrelevant.
+    # YOLO models without a 'background' class often confidently misclassify selfies.
+    if yolo_cat == "Unknown" or yolo_conf < 0.75:
+        logger.info(f"YOLO confidence ({yolo_conf:.2f}) < 0.75 or Unknown. Running Nova AI Sanitization.")
+        nova_result = classify_with_nova(bucket, key)
+        
+        is_spam = nova_result.get("is_spam", False)
+        rejection_reason = nova_result.get("rejection_reason", "")
+
+        if is_spam:
+            logger.warning("AI SPAM FILTER TRIGGERED — reason: %s", rejection_reason)
+            category = "Unknown"
+            confidence = 0.0
+        else:
+            # If not spam, we trust Nova's classification if YOLO was very weak or Unknown
+            if nova_result["category"] != "Unknown":
+                category = nova_result["category"]
+                confidence = nova_result["confidence"]
+                logger.info("Nova fallback succeeded — category=%s", category)
+            else:
+                # Nova couldn't classify it either, but it's not spam.
+                # Revert to YOLO's guess if it had one, otherwise Unknown.
+                category = yolo_cat
+                confidence = yolo_conf
+    else:
+        # YOLO was very confident (>75%)
+        category = yolo_cat
+        confidence = yolo_conf
+        logger.info("YOLO confident hit — category=%s confidence=%.2f", category, confidence)
+
+    # Determine complaint status based on AI sanitization
+    # If spam was detected OR both AI models couldn't classify, mark as invalid
+    if is_spam:
+        complaint_status = "invalid"
+    elif category == "Unknown" and confidence == 0.0:
+        complaint_status = "invalid"
+    else:
+        complaint_status = "submitted"
 
     # 3. severity calculation
     severity = calculate_severity(category, confidence)
@@ -192,11 +230,17 @@ def lambda_handler(event, context):
         "severity": severity,
         "department": department,
         "description": complaint_text,
-        "status": "submitted",
+        "status": complaint_status,
         "timestamp": db_timestamp,
         "s3_key": key,
         "priorityScore": priority_score,
     }
+
+    # Add spam metadata for admin review
+    if is_spam:
+        complaint_record["is_spam"] = True
+        complaint_record["rejection_reason"] = rejection_reason
+        complaint_record["priorityScore"] = 0  # Spam gets zero priority
 
     if latitude:
         complaint_record["latitude"] = str(latitude)

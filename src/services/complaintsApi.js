@@ -317,6 +317,13 @@ async function pollForResult(incidentId, onProgress) {
         try {
             const res = await api.get(`/complaints/${incidentId}`);
             const item = res?.complaint || res || {};
+            // If backend flagged as invalid/spam, return immediately with that info
+            if (item?.incident_id && (item?.status === 'invalid' || item?.is_spam)) {
+                const normalized = normalizeComplaint(item);
+                normalized._rejected = true;
+                normalized._rejectionReason = item.rejection_reason || 'No civic issue detected in this image.';
+                return normalized;
+            }
             if (item?.incident_id && item?.severity) return normalizeComplaint(item);
         } catch {
             // keep polling
@@ -326,6 +333,16 @@ async function pollForResult(incidentId, onProgress) {
 }
 
 function buildAnalysisResult(result, s3Keys, incidentId) {
+    // If AI rejected the image (spam/no civic issue), bubble it up
+    if (result._rejected) {
+        return {
+            success: false,
+            rejected: true,
+            rejectionReason: result._rejectionReason || 'No civic issue detected in this image.',
+            incidentId,
+        };
+    }
+
     let category = result.category;
     let subCategory = result.category;
     if (!category || category.toLowerCase() === 'unknown') {

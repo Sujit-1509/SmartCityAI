@@ -1,299 +1,279 @@
 <p align="center">
-  <img src="src/assets/hero-image.png" alt="JanSevaAI Hero" width="600" />
+  <img src="src/assets/hero-image.png" alt="JanSevaAI Hero" width="760" />
 </p>
 
-<h1 align="center">JanSevaAI — Smart Municipal Complaint System</h1>
+<h1 align="center">JanSevaAI</h1>
 
 <p align="center">
-  <strong>AI-Powered Civic Engagement Platform</strong><br/>
-  VISHWANOVA 2026 — National Level Project Competition (MIT-WPU, Pune)
+  <strong>AI-Powered Municipal Complaint Intelligence Platform</strong><br/>
+  Built for VISHWANOVA 2026 (MIT-WPU, Pune)
 </p>
 
 <p align="center">
-  <a href="https://d1lggct31hc8gn.cloudfront.net">Live Demo</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#tech-stack">Tech Stack</a> ·
-  <a href="#setup">Setup</a>
+  <a href="https://d1lggct31hc8gn.cloudfront.net"><strong>Live Demo</strong></a>
+  ·
+  <a href="#problem-we-solve">Problem</a>
+  ·
+  <a href="#solution-overview">Solution</a>
+  ·
+  <a href="#architecture">Architecture</a>
+  ·
+  <a href="#quick-start">Quick Start</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
+  <img src="https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white" alt="Vite 7" />
+  <img src="https://img.shields.io/badge/AWS-Lambda-orange?logo=amazon-aws&logoColor=white" alt="AWS Lambda" />
+  <img src="https://img.shields.io/badge/AI-YOLOv8%20%2B%20Bedrock-0A7B83" alt="YOLOv8 + Bedrock" />
+  <img src="https://img.shields.io/badge/Status-Hackathon%20Ready-success" alt="Hackathon Ready" />
 </p>
 
 ---
 
-## Overview
+## Problem We Solve
 
-JanSevaAI is a fully serverless platform that enables citizens to report civic issues (potholes, garbage, broken streetlights, waterlogging) by simply uploading a photo. The system uses a custom-trained **YOLOv8** computer vision model and **Amazon Bedrock (Claude)** to automatically:
+Cities receive thousands of civic complaints, but traditional systems are slow, manual, and opaque.
 
-1. **Detect** the issue type with 90%+ accuracy
-2. **Assess** severity using rule-based logic
-3. **Generate** a formal complaint description using LLM
-4. **Route** it to the correct municipal department
-5. **Notify** administrators via email
+- Citizens do not know where or how to report issues reliably.
+- Municipal teams waste time in manual triage and department routing.
+- Workers cannot prove on-site resolution confidently.
+- Admins lack actionable, real-time analytics for hotspot planning.
 
-Citizens authenticate via OTP (SMS) and can track their complaints in real-time.
+JanSevaAI converts a simple photo into a structured, trackable, department-ready complaint in seconds.
+
+## Solution Overview
+
+JanSevaAI is a full-stack civic platform where citizens upload issue photos (potholes, garbage, streetlights, waterlogging), and AI does the heavy lifting:
+
+1. Detects issue category from image.
+2. Estimates severity and urgency.
+3. Generates formal complaint text.
+4. Routes to the right municipal department.
+5. Enables admin oversight and worker execution with proof-based closure.
+
+### Why it stands out
+
+- **Dual AI path**: YOLOv8 on EC2 (primary) + Bedrock Nova Lite fallback (Eco-Mode).
+- **Role-based operations**: Citizen, Admin, Worker views with guarded routes/actions.
+- **End-to-end traceability**: Complaint lifecycle, status history, proof photo, and geofence checks.
+- **Production-ready deployment**: S3 + CloudFront + API Gateway + Lambda + DynamoDB.
 
 ---
 
 ## Live Demo
 
-> **Production URL:** [https://d1lggct31hc8gn.cloudfront.net](https://d1lggct31hc8gn.cloudfront.net)
+- **Production URL**: `https://d1lggct31hc8gn.cloudfront.net`
+- **Quick Login**: enter any name, any 10-digit phone, OTP `123456` (demo mode)
 
-**Quick Login:** Enter any name, any 10-digit phone number, and use OTP `123456` to log in.
+### Demo User Roles
+
+- **Citizen**: submit and track complaints
+- **Admin**: manage workers, assignments, analytics
+- **Worker**: accept/reject/resolve assigned tasks with proof
 
 ---
 
-## Key Features
+## Feature Highlights
 
-| Feature | Description |
-|---------|-------------|
-| **Premium UI Design** | Built on **Design System v3** (Glassmorphism, gradients, modern utility classes) |
-| **Photo-Based Reporting** | Upload a photo → AI detects potholes, garbage, broken lights, waterlogging |
-| **YOLOv8 Vision AI** | Custom-trained model with robust issue detection + confidence scoring |
-| **Eco-Mode AI Fallback** | Automatic zero-downtime degradation to Amazon Bedrock (Nova Lite) if the primary EC2 Vision Server is unreachable, ensuring continuous operation at zero compute cost. |
-| **LLM Descriptions** | Amazon Bedrock (Claude) generates formal complaint text automatically |
-| **GPS Auto-Detect** | Real-time location tagging with coordinates |
-| **GPS Proof-of-Work** | Workers capture geolocation at resolve-time to prove on-site resolution |
-| **OTP Authentication** | Secure phone-based login via AWS SNS |
-| **CSV Export** | Download filtered complaint reports for administrative analysis |
-| **Draft Preservation** | Progress is saved to sessionStorage — no data loss on page refresh |
-| **Stability Plus** | Global React **ErrorBoundary** prevents blank screens on API failures |
-| **Admin Analytics** | Real-time charts, department performance tracking, and worker management |
-| **Worker Dashboard** | Specialized view for field teams to accept, reject, and resolve tasks |
-| **Smart Routing** | Auto-assignment to PWD, Sanitation, Electrical, or Water departments |
-| **Mobile Responsive** | Fully responsive design for desktop and mobile browsers |
+| Capability | What it does |
+| --- | --- |
+| AI Photo Triage | Auto-classifies complaint type from uploaded images |
+| Eco-Mode Fallback | Falls back to Bedrock when YOLO server is unavailable |
+| OTP Authentication | Phone-based login using AWS SNS/Pinpoint |
+| Worker Operations | Accept/reject tasks, resolve with image proof |
+| GPS Proof-of-Work | Geofence checks for worker resolution authenticity |
+| SLA Monitoring | Flags warning/breach windows in admin workflow |
+| Admin Command Center | Complaint table, bulk actions, worker management |
+| Analytics | Trends, category mix, departmental performance, hotspots |
+| CSV Export | Filtered complaint exports for reporting and governance |
+| Resilient UX | Draft save, mock fallback mode, and graceful error handling |
 
 ---
 
 <a id="architecture"></a>
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         FRONTEND (React + Vite)                     │
-│                    Hosted on S3 + CloudFront CDN                    │
-└──────────────────────────┬──────────────────────────────────────────┘
-                           │ HTTPS
-                           ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                       AWS API GATEWAY (REST)                         │
-│                                                                      │
-│  POST /auth/send-otp        POST /upload/presign                     │
-│  POST /auth/verify-otp      POST /complaints                         │
-│  GET  /complaints            GET  /complaints/{id}                   │
-│  GET  /complaints/nearby     POST /complaints/bulk                    │
-│  PATCH /complaints/{id}/status POST /complaints/{id}/upvote          │
-└────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┘
-     │          │          │          │          │          │
-     ▼          ▼          ▼          ▼          ▼          ▼
-  ┌──────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐
-  │ Auth │  │Upload  │  │Submit  │  │Status  │  │Nearby  │  │Bulk    │
-  │Lambda│  │Presign │  │Complnt │  │Update  │  │Lambda  │  │Update  │
-  └──┬───┘  └───┬────┘  └───┬────┘  └───┬────┘  └───┬────┘  └───┬────┘
-     │          │            │           │           │
-     ▼          ▼            ▼           ▼           ▼
-  ┌──────┐  ┌──────┐     ┌────────────────────────────┐
-  │ SNS  │  │  S3  │────▶│      DynamoDB (Complaints)  │
-  │(SMS) │  │Bucket│     └────────────────────────────┘
-  └──────┘  └──┬───┘                   ▲
-               │ S3 Event Trigger      │
-               ▼                       │
-         ┌───────────┐                 │
-         │ Process   │─────────────────┘
-         │ Image λ   │
-         └─────┬─────┘
-               │
-    ╔══════════╧══════════╗
-    ║      AI ROUTER      ║
-    ╚═══╦═════════════╦═══╝
-(Primary) ▼           ▼ (Fallback "Eco-Mode")
-  ┌────────┐      ┌──────────┐
-  │ EC2    │      │ Bedrock  │
-  │ YOLOv8 │      │ (Nova)   │
-  └────────┘      └──────────┘
+```text
+Citizen / Admin / Worker Web App (React + Vite)
+               |
+               v
+      CloudFront + S3 (Frontend Hosting)
+               |
+               v
+          API Gateway (REST)
+               |
+  +------------+-------------+-----------------------------+
+  |            |             |                             |
+  v            v             v                             v
+Auth       Upload URL     Complaints API              Worker/Admin API
+Lambda     Lambda         (submit/get/update)         (assign/bulk/workers)
+  |            |             |                             |
+  |            v             +-----------+-----------------+
+  |          S3 Images                   v
+  |            |                    DynamoDB
+  |            v                   (Complaints, Users,
+  |      S3 Event Trigger            Workers)
+  |            |
+  |            v
+  |     Process Image Lambda
+  |            |
+  |     +------+----------------+
+  |     |                       |
+  |     v                       v
+  |  YOLOv8 (EC2)       Bedrock Nova Lite
+  |   Primary AI          Fallback AI
+  |
+  +--> JWT issued on OTP verify
 ```
 
-### Data Flow
+### Complaint lifecycle
 
-1. **Citizen** uploads a photo via the React frontend
-2. Frontend requests a **presigned S3 URL** from the Upload Lambda
-3. Image is uploaded **directly to S3** (bypasses Lambda payload limits)
-4. S3 ObjectCreated event triggers the **Process Image Lambda**
-5. Process Image Lambda calls **YOLOv8** on EC2 for primary classification
-6. If EC2 is offline (Cost Optimization), Lambda automatically falls back to **Amazon Bedrock (Nova Lite)** for fallback classification.
-7. **Severity** is calculated, **department** is mapped, and **Bedrock (Claude)** generates a description
-8. Result is saved to **DynamoDB** and admin is notified via **SES**
-9. Citizen finalizes with notes/GPS via the **Submit Complaint Lambda**
+1. User uploads image(s) from frontend.
+2. Frontend gets presigned S3 URL and uploads directly.
+3. S3 event triggers image processing Lambda.
+4. AI detects category/severity and creates enriched complaint data.
+5. Citizen finalizes submission with notes + location.
+6. Admin assigns worker, tracks SLA and progress.
+7. Worker resolves with proof and optional GPS validation.
 
 ---
 
-<a id="tech-stack"></a>
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| **Frontend** | React 19, Vite 7, React Router v7 |
-| **Styling** | Vanilla CSS with custom design system |
-| **Compute** | AWS Lambda (Python 3.12) |
-| **API** | Amazon API Gateway (REST) |
-| **Hosting** | Amazon S3 + CloudFront CDN |
-| **Database** | Amazon DynamoDB |
-| **Storage** | Amazon S3 (image storage) |
-| **Auth** | AWS SNS / Amazon Pinpoint (SMS OTP) |
-| **AI/ML** | YOLOv8 (custom-trained) on EC2 |
-| **LLM (Fallback)** | Amazon Bedrock (Nova Lite Vision) |
-| **LLM (Text)** | Amazon Bedrock (Claude 3 Haiku) |
-| **Email** | Amazon SES |
+| --- | --- |
+| Frontend | React 19, Vite 7, React Router v7 |
+| UI | Vanilla CSS, Design System v3 |
+| API | AWS API Gateway (REST) |
+| Compute | AWS Lambda (Python 3.12) |
+| Data | DynamoDB |
+| Object Storage | S3 |
+| CDN/Hosting | CloudFront + S3 |
+| Auth | AWS SNS / Pinpoint OTP + JWT |
+| Vision AI | YOLOv8 on EC2 |
+| AI Fallback | Amazon Bedrock Nova Lite |
+| LLM Text | Amazon Bedrock Claude 3 Haiku |
+| Notifications | Amazon SES |
 
 ---
 
 ## Project Structure
 
-```
-JanSevaAI-frontend/
-│
-├── src/                          # Frontend source code
-│   ├── components/
-│   │   ├── Layout/               # Sidebar, TopBar, AppLayout, CitizenLayout
-│   │   └── Shared/               # Reusable UI components (badges, tags, loaders)
-│   ├── pages/
-│   │   ├── Home/                 # Landing page with stats & features
-│   │   ├── Login/                # OTP-based authentication
-│   │   ├── SubmitComplaint/      # Multi-step complaint wizard
-│   │   ├── MyComplaints/         # User's complaint list with filters
-│   │   ├── ComplaintDetail/      # Individual complaint view with image
-│   │   ├── Dashboard/            # Admin analytics dashboard
-│   │   └── Worker/               # Field worker assignment view
-│   ├── services/
-│   │   ├── api.js                # API service layer with mock fallbacks
-│   │   └── apiClient.js          # HTTP client with auth & error handling
-│   ├── data/
-│   │   └── mockData.js           # Development mock data
-│   ├── App.jsx                   # Root component with routing & auth
-│   ├── main.jsx                  # Entry point
-│   └── index.css                 # Global design system (variables, utilities)
-│
-├── backend/                      # AWS Lambda function source code
-│   ├── auth/                     # OTP send & verify (SNS + DynamoDB)
-│   ├── generate_upload_url/      # S3 presigned URL generation
-│   ├── process_image/            # AI pipeline (YOLO + Bedrock + SES)
-│   ├── submit_complaint/         # Finalize complaint submission
-│   ├── get_user_complaints/      # List complaints (with phone filter)
-│   ├── get_complaint/            # Get single complaint by ID
-│   ├── update_complaint_status/  # Update status + GPS stamp log
-│   ├── bulk_update/              # Worker assignment & status in bulk
-│   ├── upvote_complaint/         # Increment upvotes & priority score
-│   ├── get_nearby_complaints/    # Haversine distance-based filtering
-│   ├── assign_complaint/         # Manual assignment to field team
-│   ├── delete_complaint/         # Admin removal of incidents
-│   ├── manage_workers/           # CRUD operations for worker registry
-│   └── README.md                 # Lambda documentation
-│
-├── docs/                         # Setup & deployment guides
-│   ├── aws_lambda_gateway_setup.md
-│   ├── frontend_hosting.md
-│   └── yolo_ec2_setup.md
-│
-├── model/                        # YOLOv8 model artifacts (gitignored)
-│   ├── best.pt                   # Trained model weights
-│   ├── confusion_matrix.png      # Training evaluation
-│   └── results.png               # Training metrics
-│
-├── .env.example                  # Environment variable template
-├── .gitignore                    # Git exclusions
-├── index.html                    # Vite entry HTML
-├── package.json                  # Node.js dependencies
-├── vite.config.js                # Vite configuration
-└── README.md                     # This file
+```text
+jansevaAI/
+  src/
+    components/
+    pages/
+    services/
+      apiClient.js
+      authApi.js
+      complaintsApi.js
+      workersApi.js
+      analyticsApi.js
+      api.js
+  backend/
+    auth/
+    generate_upload_url/
+    process_image/
+    submit_complaint/
+    get_user_complaints/
+    get_complaint/
+    update_complaint_status/
+    bulk_update/
+    assign_complaint/
+    manage_workers/
+    delete_complaint/
+    get_nearby_complaints/
+    upvote_complaint/
+  docs/
+    aws_lambda_gateway_setup.md
+    frontend_hosting.md
+    yolo_ec2_setup.md
+    api_matrix.md
 ```
 
 ---
 
-<a id="setup"></a>
-## Setup & Installation
+<a id="quick-start"></a>
+## Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- AWS Account with configured services
-- Python 3.12 (for Lambda development)
 
-### 1. Clone & Install
+- Node.js 18+
+- AWS account (for full cloud setup)
+
+### 1) Clone and install
 
 ```bash
 git clone https://github.com/Sujit-1509/jansevaAI.git
-cd JanSevaAI-frontend
+cd jansevaAI
 npm install
 ```
 
-### 2. Configure Environment
+### 2) Configure environment
 
-```bash
-cp .env.example .env
-```
+Create `.env` from `.env.example` and set:
 
-Edit `.env` and set your API Gateway URL:
-```
+```env
 VITE_API_BASE_URL=https://your-api-id.execute-api.ap-south-1.amazonaws.com/prod
 ```
 
-### 3. Run Locally
+### 3) Run locally
 
 ```bash
 npm run dev
 ```
 
-### 4. Build for Production
+### 4) Build production
 
 ```bash
 npm run build
 ```
 
-Upload the `dist/` folder to your S3 bucket and create a CloudFront invalidation.
+Deploy `dist/` to S3 and invalidate CloudFront.
 
-### 5. Amazon Pinpoint (SMS OTP) Configuration
+---
 
-JanSevaAI uses Amazon Pinpoint/SNS for phone authentication. Ensure your AWS account is out of the **SMS Sandbox**.
+## Security and Access Model
 
-1. Navigate to the **Amazon Pinpoint Console** in `ap-south-1`.
-2. Access **SMS and voice** settings.
-3. Update your **Account spend limit** to the approved amount (e.g., $50 USD).
-4. *(Optional)* Set up Country Rules to block sending to unintended regions.
-> **Note:** Changes to the spend limit can take up to an hour to reflect across AWS systems.
+- JWT-based authorization for API calls
+- Role-based route guards: `citizen`, `admin`, `worker`
+- Backend role enforcement inside Lambdas
+- Citizens can only access their own complaint data
+- Worker resolution supports geofence checks for anti-fraud
+
+---
+
+## Hackathon Pitch Snapshot
+
+- **Problem**: civic complaints are under-reported, slow to process, and non-transparent.
+- **Solution**: AI-first complaint triage and full lifecycle management in one platform.
+- **Impact**: faster response, cleaner audit trail, and better city-level planning through analytics.
 
 ---
 
 ## Documentation
 
-Detailed setup guides for each AWS service:
-
-| Guide | Description |
-|-------|-------------|
-| [AWS Lambda & API Gateway](docs/aws_lambda_gateway_setup.md) | Lambda creation, API routes, IAM roles |
-| [Frontend Hosting](docs/frontend_hosting.md) | S3 bucket, CloudFront distribution setup |
-| [YOLOv8 EC2 Server](docs/yolo_ec2_setup.md) | EC2 instance, FastAPI server, model deployment |
+- `docs/aws_lambda_gateway_setup.md` - API + Lambda setup
+- `docs/frontend_hosting.md` - S3 + CloudFront hosting
+- `docs/yolo_ec2_setup.md` - YOLOv8 model server
+- `docs/api_matrix.md` - endpoint-to-frontend mapping
 
 ---
 
-## Security
+## Team and Event
 
-- **Authentication**: Phone-based OTP via AWS SNS
-- **Role-Based Access Control (RBAC)**: Secure multi-tenant architecture strictly routes authenticated JWT users to specific views (Citizen, Admin, Worker) while enforcing permission constraints in Lambdas.
-- **Authorization**: JSON Web Tokens (JWT) using shared secrets with AWS KMS enforcement
-- **API Security**: API Gateway with secure CORS headers and preflight validations
-- **Data Privacy**: User complaints are horizontally filtered by phone number — users only retrieve their own datasets.
-- **Infrastructure**: All services run internally within AWS utilizing IAM-scoped execution roles for principle of least privilege.
-
----
-
-## Team
-
-Built for the **VISHWANOVA 2026** — National Level Project Competition (MIT-WPU, Pune).
+Built for **VISHWANOVA 2026**, National Level Project Competition, MIT-WPU Pune.
 
 ---
 
 ## License
 
-MIT License
+MIT
 
 ---
 
 <p align="center">
-  <strong>JanSevaAI</strong> — Making Indian cities smarter, one photo at a time.
+  <strong>JanSevaAI</strong> - Making cities responsive, transparent, and AI-ready.
 </p>

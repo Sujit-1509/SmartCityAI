@@ -8,6 +8,8 @@ a formal municipal complaint description.
 import logging
 import boto3
 
+from config import TEXT_MODEL_ID
+
 logger = logging.getLogger(__name__)
 
 # Nova is in us-east-1
@@ -42,7 +44,7 @@ def generate_complaint_text(
         logger.info("Sending text generation prompt to Amazon Nova Micro...")
         
         response = nova_bedrock_client.converse(
-            modelId="amazon.nova-micro-v1:0",
+            modelId=TEXT_MODEL_ID,
             messages=[
                 {
                     "role": "user",

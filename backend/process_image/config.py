@@ -20,8 +20,11 @@ TABLE_NAME: str = os.environ.get("TABLE_NAME", "Complaints")
 # ── YOLO FastAPI Inference Endpoint (EC2) ────────────────────────────────────
 EC2_ENDPOINT: str = os.environ.get("EC2_ENDPOINT", "http://localhost:8000/predict")
 
-# ── Amazon Bedrock Model ─────────────────────────────────────────────────────
-MODEL_ID: str = os.environ.get("MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0")
+# ── Amazon Bedrock Models ────────────────────────────────────────────────────
+# Text generation (complaint descriptions) — Amazon Nova Micro in us-east-1
+TEXT_MODEL_ID: str = os.environ.get("TEXT_MODEL_ID", "amazon.nova-micro-v1:0")
+# Vision/classification (image analysis & resolution verification) — Amazon Nova Lite in us-east-1
+VISION_MODEL_ID: str = os.environ.get("VISION_MODEL_ID", "amazon.nova-lite-v1:0")
 
 # ── Amazon SES ───────────────────────────────────────────────────────────────
 SES_SOURCE_EMAIL: str = os.environ.get("SES_SOURCE_EMAIL", "").strip()

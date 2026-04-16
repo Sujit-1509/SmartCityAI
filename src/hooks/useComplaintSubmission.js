@@ -73,6 +73,14 @@ export function useComplaintSubmission(location) {
             const res = await analyzeImages(images, (stage) => {
                 setAnalysisProgress(stage);
             });
+
+            // AI rejected the image (no civic issue / spam detected)
+            if (res.rejected) {
+                setError(res.rejectionReason || 'No civic issue detected in this image. Please upload a photo showing a real infrastructure problem (pothole, garbage, broken streetlight, or waterlogging).');
+                setStep(0);
+                return;
+            }
+
             setAnalysis(res.analysis);
             setS3Keys(res.s3Keys || []);
             setStep(3);

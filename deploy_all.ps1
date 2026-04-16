@@ -35,5 +35,6 @@ Deploy-Lambda "backend/get_user_complaints" "civicai-get-complaints"
 Deploy-Lambda "backend/get_complaint" "civicai-get-complaint"
 Deploy-Lambda "backend/get_nearby_complaints" "civicai-get-nearby-complaints"
 Deploy-Lambda "backend/assign_complaint" "civicai-assign-complaint"
+Deploy-Lambda "backend/verify_resolution" "civicai-verify-resolution"
 
 Write-Host "All specified Lambdas deployed successfully!"

@@ -11,6 +11,7 @@ import json
 import logging
 import boto3
 
+from config import VISION_MODEL_ID
 from aws_utils import s3_client
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ VALID_CATEGORIES = ["pothole", "garbage", "streetlight", "water"]
 def classify_with_nova(bucket: str, key: str) -> dict:
     """
     Download image from S3 in ap-south-1, and classify using Amazon Nova Lite in us-east-1.
+    Also performs AI Sanitization — detects irrelevant content (selfies, memes, screenshots).
     """
     try:
         logger.info("Nova Vision fallback — downloading s3://%s/%s", bucket, key)
@@ -37,19 +39,31 @@ def classify_with_nova(bucket: str, key: str) -> dict:
             ext = "jpeg" # fallback default
 
         prompt_text = (
-            "You are an AI classifier for a municipal complaint system. "
-            "Analyze this image and classify it into EXACTLY ONE of these categories:\n"
+            "You are an AI classifier for a municipal civic complaint system. "
+            "Your job has TWO parts:\n\n"
+            "PART 1 — RELEVANCE CHECK:\n"
+            "First, determine if this image depicts a REAL civic infrastructure issue. "
+            "The following are NOT valid civic complaints and should be marked as spam:\n"
+            "- Selfies, portraits, or photos of people\n"
+            "- Screenshots of apps, websites, or text messages\n"
+            "- Memes, cartoons, or digitally generated images\n"
+            "- Photos of food, animals, or indoor scenes unrelated to civic issues\n"
+            "- Blurry or completely dark images where nothing is identifiable\n"
+            "- Random objects that are not infrastructure problems\n\n"
+            "PART 2 — CLASSIFICATION (only if relevant):\n"
+            "If the image IS a valid civic issue, classify it into EXACTLY ONE category:\n"
             "- pothole (road damage, cracks, holes in road surface)\n"
             "- garbage (waste, trash, litter, debris, dump sites)\n"
             "- streetlight (broken, damaged, or non-functional street lights)\n"
             "- water (waterlogging, flooding, stagnant water, sewage overflow)\n\n"
-            "Respond with ONLY a JSON object, exactly like this:\n"
-            '{"category": "pothole", "confidence": 0.95}'
+            "Respond with ONLY a JSON object. Examples:\n"
+            'Valid civic issue:   {"is_civic": true, "category": "pothole", "confidence": 0.95}\n'
+            'Irrelevant content:  {"is_civic": false, "category": "Unknown", "confidence": 0.0, "rejection_reason": "selfie detected"}'
         )
 
-        logger.info("Sending image to Amazon Nova Lite in us-east-1...")
+        logger.info("Sending image to Amazon Nova Lite in us-east-1 (with spam detection)...")
         response = nova_bedrock_client.converse(
-            modelId="amazon.nova-lite-v1:0",
+            modelId=VISION_MODEL_ID,
             messages=[
                 {
                     "role": "user",
@@ -66,7 +80,7 @@ def classify_with_nova(bucket: str, key: str) -> dict:
             ],
             inferenceConfig={
                 "temperature": 0.1,
-                "maxTokens": 100
+                "maxTokens": 150
             }
         )
 
@@ -81,8 +95,23 @@ def classify_with_nova(bucket: str, key: str) -> dict:
                 
         result = json.loads(completion)
         
+        is_civic = result.get("is_civic", True)
         category = result.get("category", "Unknown").lower()
         confidence = float(result.get("confidence", 0.0))
+        rejection_reason = result.get("rejection_reason", "")
+
+        # AI Sanitization — flag non-civic content as spam
+        if not is_civic:
+            logger.warning(
+                "SPAM DETECTED by Nova Vision — rejection_reason: %s",
+                rejection_reason,
+            )
+            return {
+                "category": "Unknown",
+                "confidence": 0.0,
+                "is_spam": True,
+                "rejection_reason": rejection_reason,
+            }
 
         if category not in VALID_CATEGORIES:
             logger.warning("Nova returned invalid category: %s", category)
@@ -90,11 +119,11 @@ def classify_with_nova(bucket: str, key: str) -> dict:
             confidence = 0.0
 
         logger.info(
-            "Nova Vision classified — category=%s confidence=%.2f",
+            "Nova Vision classified — category=%s confidence=%.2f is_civic=True",
             category, confidence,
         )
-        return {"category": category, "confidence": confidence}
+        return {"category": category, "confidence": confidence, "is_spam": False}
 
     except Exception as exc:
         logger.error("Nova Vision fallback failed: %s", str(exc))
-        return {"category": "Unknown", "confidence": 0.0}
+        return {"category": "Unknown", "confidence": 0.0, "is_spam": False}
