@@ -5,8 +5,7 @@
 <h1 align="center">JanSevaAI</h1>
 
 <p align="center">
-  <strong>AI-Powered Municipal Complaint Intelligence Platform</strong><br/>
-  Built for VISHWANOVA 2026 (MIT-WPU, Pune)
+  <strong>AI-Powered Municipal Complaint Intelligence Platform</strong>
 </p>
 
 <p align="center">
@@ -26,7 +25,6 @@
   <img src="https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white" alt="Vite 7" />
   <img src="https://img.shields.io/badge/AWS-Lambda-orange?logo=amazon-aws&logoColor=white" alt="AWS Lambda" />
   <img src="https://img.shields.io/badge/AI-YOLOv8%20%2B%20Bedrock-0A7B83" alt="YOLOv8 + Bedrock" />
-  <img src="https://img.shields.io/badge/Status-Hackathon%20Ready-success" alt="Hackathon Ready" />
 </p>
 
 ---
@@ -243,15 +241,7 @@ Deploy `dist/` to S3 and invalidate CloudFront.
 - Citizens can only access their own complaint data
 - Worker resolution supports geofence checks for anti-fraud
 
----
 
-## Hackathon Pitch Snapshot
-
-- **Problem**: civic complaints are under-reported, slow to process, and non-transparent.
-- **Solution**: AI-first complaint triage and full lifecycle management in one platform.
-- **Impact**: faster response, cleaner audit trail, and better city-level planning through analytics.
-
----
 
 ## Documentation
 
@@ -260,13 +250,7 @@ Deploy `dist/` to S3 and invalidate CloudFront.
 - `docs/yolo_ec2_setup.md` - YOLOv8 model server
 - `docs/api_matrix.md` - endpoint-to-frontend mapping
 
----
 
-## Team and Event
-
-Built for **VISHWANOVA 2026**, National Level Project Competition, MIT-WPU Pune.
-
----
 
 ## License
 
