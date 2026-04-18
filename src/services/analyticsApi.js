@@ -163,6 +163,30 @@ function computeStats(complaints) {
         return new Date(c.sla_deadline).getTime() < nowMs;
     }).length;
 
+    let positiveCount = 0;
+    let neutralCount = 0;
+    let negativeCount = 0;
+    let feedbackCount = 0;
+    const deptSentimentMap = {};
+
+    complaints.forEach((c) => {
+        if (c.sentiment) {
+            feedbackCount++;
+            if (c.sentiment === 'positive') positiveCount++;
+            else if (c.sentiment === 'negative') negativeCount++;
+            else neutralCount++;
+
+            const d = c.department || 'General';
+            if (!deptSentimentMap[d]) deptSentimentMap[d] = { dept: d, positive: 0, neutral: 0, negative: 0, total: 0 };
+            deptSentimentMap[d].total++;
+            deptSentimentMap[d][c.sentiment]++;
+        }
+    });
+
+    const publicSatisfaction = feedbackCount > 0 ? Math.round((positiveCount / feedbackCount) * 100) : null;
+    const sentimentBreakdown = { positive: positiveCount, neutral: neutralCount, negative: negativeCount, total: feedbackCount };
+    const deptSentiment = Object.values(deptSentimentMap).sort((a, b) => b.total - a.total);
+
     return {
         totalComplaints: total,
         activeComplaints: active,
@@ -176,5 +200,8 @@ function computeStats(complaints) {
         monthlyTrends,
         departmentPerformance,
         slaBreached,
+        publicSatisfaction,
+        sentimentBreakdown,
+        deptSentiment,
     };
 }

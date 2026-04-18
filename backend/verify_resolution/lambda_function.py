@@ -31,21 +31,30 @@ dynamodb = boto3.resource("dynamodb", region_name=REGION)
 nova_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
 VERIFICATION_PROMPT = (
-    "You are an AI auditor for a municipal complaint resolution system. "
+    "You are an AI auditor for a municipal complaint resolution system in India. "
     "You are given TWO images:\n\n"
     "IMAGE 1 (BEFORE): The original civic complaint photo submitted by a citizen. "
     "It shows a civic issue like a pothole, garbage dump, broken streetlight, or waterlogging.\n\n"
     "IMAGE 2 (AFTER): A resolution proof photo uploaded by a field worker who claims to have fixed the issue.\n\n"
     "Your job is to verify the resolution by answering THREE questions:\n\n"
     "1. LOCATION MATCH: Do both photos appear to be taken at the SAME location? "
-    "Look for matching visual landmarks (buildings, walls, trees, road markings, sidewalks, signs).\n\n"
+    "Look for matching visual landmarks (buildings, vehicles, walls, trees, road markings, sidewalks, signs). "
+    "Note: Lighting, weather, angle, and time-of-day differences are NORMAL and should NOT reduce confidence.\n\n"
     "2. ISSUE RESOLVED: Has the civic issue been genuinely fixed? "
-    "For example: pothole filled with asphalt, garbage cleaned up, streetlight repaired, water drained.\n\n"
+    "IMPORTANT — signs of a GENUINE repair include:\n"
+    "   - Fresh asphalt or tar patches that look darker or have a different texture than the surrounding road\n"
+    "   - Filled-in areas where a pothole, crack, or hole previously existed\n"
+    "   - Cleaned areas where garbage or debris was previously piled\n"
+    "   - New or repaired fixtures (streetlights, pipes, drains)\n"
+    "   - Drained areas where waterlogging was previously present\n"
+    "   A repaired area will often look DIFFERENT from the surrounding surface — this is expected and is NOT a sign of failure. "
+    "The key question is: is the original hazard or issue no longer present?\n"
+    "   Only mark as NOT resolved if the original issue (e.g. pothole, garbage, flooding) is still clearly visible and unfixed.\n\n"
     "3. CONFIDENCE: How confident are you in your assessment (0.0 to 1.0)?\n\n"
-    "Respond with ONLY a JSON object. Examples:\n"
-    'Genuine fix:      {"location_match": true, "issue_resolved": true, "confidence": 0.92, "summary": "Pothole properly filled with asphalt. Same road corner visible."}\n'
-    'Suspicious:       {"location_match": false, "issue_resolved": false, "confidence": 0.85, "summary": "Photos appear to be from different locations. No matching landmarks."}\n'
-    'Partial fix:      {"location_match": true, "issue_resolved": false, "confidence": 0.78, "summary": "Same location confirmed but garbage is still partially visible."}'
+    "Respond with ONLY a valid JSON object (no markdown, no explanation). Examples:\n"
+    'Genuine fix:      {"location_match": true, "issue_resolved": true, "confidence": 0.92, "summary": "Pothole filled with fresh asphalt patch. Same road corner confirmed by matching parked vehicles and sidewalk."}\n'
+    'Suspicious:       {"location_match": false, "issue_resolved": false, "confidence": 0.85, "summary": "Photos appear to be from entirely different locations. No matching landmarks found."}\n'
+    'Partial fix:      {"location_match": true, "issue_resolved": false, "confidence": 0.78, "summary": "Same location confirmed but the original pothole is still open and unfilled."}'
 )
 
 

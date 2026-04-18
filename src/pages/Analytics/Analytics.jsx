@@ -182,6 +182,20 @@ export default function Analytics() {
     });
     const depts = Object.values(deptMap).sort((a,b) => b.total - a.total).slice(0, 6);
 
+    // Sentiment by Department
+    let fdbTotal = 0;
+    const deptSentMap = {};
+    complaints.forEach(c => {
+        if (c.sentiment) {
+            fdbTotal++;
+            const d = c.department || 'General';
+            if (!deptSentMap[d]) deptSentMap[d] = { dept: d, pos: 0, total: 0 };
+            deptSentMap[d].total++;
+            if (c.sentiment === 'positive') deptSentMap[d].pos++;
+        }
+    });
+    const deptSentiment = Object.values(deptSentMap).sort((a,b) => b.total - a.total).slice(0, 6);
+
     // Hotspot addresses
     const addrMap = {};
     complaints.forEach(c => {
@@ -303,6 +317,39 @@ export default function Analytics() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Sentiment by Department */}
+                    <div className="ana-card">
+                        <h3 className="ana-card-title">Satisfaction by Department</h3>
+                        {fdbTotal === 0 && <p className="ana-empty">No feedback data yet</p>}
+                        {fdbTotal > 0 && (
+                            <table className="dept-table">
+                                <thead>
+                                    <tr>
+                                        <th>Department</th>
+                                        <th>Feedback count</th>
+                                        <th>Satisfaction %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {deptSentiment.map(d => {
+                                        const percent = Math.round((d.pos / d.total) * 100);
+                                        return (
+                                        <tr key={d.dept}>
+                                            <td>{d.dept}</td>
+                                            <td>{d.total}</td>
+                                            <td>
+                                                <span className={`rate-badge ${percent >= 70 ? 'rate-good' : (percent >= 40 ? 'rate-low' : 'rate-low')}`} style={percent < 40 ? { background: 'var(--color-background-danger)', color: 'var(--color-text-danger)' } : {}}>
+                                                    {percent}% positive
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
                     </div>
 
                     {/* Top hotspot addresses */}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     FileText, Flame, CheckCircle, Clock,
-    TrendingUp, MapPin, Shield, AlertTriangle,
+    TrendingUp, MapPin, Shield, AlertTriangle, MessageSquare, Smile,
 } from 'lucide-react';
 import {
     PieChart, Pie, Cell,
@@ -147,6 +147,31 @@ const Dashboard = () => {
                                 : 'Unresolved past deadline'
                         }
                         changeType={(stats.slaBreached ?? slaData.breached.length) > 0 ? 'down' : 'up'}
+                    />
+                </div>
+
+                {/* Third KPI Row — Public Sentiment */}
+                <div className="stats-grid" style={{ marginTop: 'var(--space-md)' }}>
+                    <StatsCard
+                        icon={<Smile size={20} style={{ color: 'var(--success)' }} />}
+                        label="Public Satisfaction"
+                        value={stats.publicSatisfaction != null ? `${stats.publicSatisfaction}%` : 'N/A'}
+                        change={stats.sentimentBreakdown ? `${stats.sentimentBreakdown.total} feedback received` : 'Based on feedback'}
+                        changeType="up"
+                    />
+                    <StatsCard
+                        icon={<MessageSquare size={20} style={{ color: 'var(--primary)' }} />}
+                        label="Positive Feedback"
+                        value={stats.sentimentBreakdown ? stats.sentimentBreakdown.positive : 0}
+                        change="Happy citizens"
+                        changeType="up"
+                    />
+                    <StatsCard
+                        icon={<AlertTriangle size={20} style={{ color: 'var(--danger)' }} />}
+                        label="Negative"
+                        value={stats.sentimentBreakdown ? stats.sentimentBreakdown.negative : 0}
+                        change="Areas for improvement"
+                        changeType="down"
                     />
                 </div>
 
