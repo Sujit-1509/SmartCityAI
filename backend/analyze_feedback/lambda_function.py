@@ -136,7 +136,7 @@ def lambda_handler(event, context):
         if not complaint:
             return _response(404, {"error": "Complaint not found"})
 
-        # Only the complaint owner or an admin can submit feedback
+        # Only the complaint owner can submit feedback
         user_phone = user.get("phone", "")
         complaint_phone = complaint.get("user_phone", "")
         is_owner = (
@@ -144,12 +144,9 @@ def lambda_handler(event, context):
             and complaint_phone
             and (user_phone in complaint_phone or complaint_phone in user_phone)
         )
-        is_admin = user.get("role") == "admin"
 
-        if not is_owner and not is_admin:
-            return _response(
-                403, {"error": "Only the complaint owner can submit feedback"}
-            )
+        if not is_owner:
+            return _response(403, {"error": "Only the complaint owner can submit feedback"})
 
     except ClientError as e:
         logger.error("DynamoDB get_item failed: %s", str(e))

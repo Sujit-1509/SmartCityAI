@@ -69,7 +69,7 @@ The backend relies on the `nltk` and `regex` Python libraries. Because Lambda ru
 ### Security (JWT)
 The feedback endpoint is secured via standard JanSevaAI JWT verification. The backend validates:
 1. That the token is valid and not expired.
-2. That the `phone` in the token matches the `user_phone` in the DynamoDB record (unless the user is an Admin).
+2. That the `phone` in the token matches the `user_phone` in the DynamoDB record.
 
 ---
 

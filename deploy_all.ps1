@@ -27,6 +27,7 @@ Write-Host "Starting Master Deployment..."
 # List of folder to function mappings
 Deploy-Lambda "backend/update_complaint_status" "civicai-update-status"
 Deploy-Lambda "backend/manage_workers" "civicai-manage-workers"
+Deploy-Lambda "backend/generate_upload_url" "civicai-generate-upload-url"
 Deploy-Lambda "backend/process_image" "process_image"
 Deploy-Lambda "backend/submit_complaint" "civicai-submit-complaint"
 Deploy-Lambda "backend/auth" "civicai-auth"

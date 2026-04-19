@@ -1,7 +1,7 @@
 import json
 import logging
 import urllib.parse
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from config import TABLE_NAME, SES_SOURCE_EMAIL, SMS_NOTIFICATIONS_ENABLED
 from aws_utils import dynamodb_resource, ses_client, sns_client
@@ -11,9 +11,19 @@ from severity_rules import calculate_severity
 from department_mapper import get_department
 from prompt_builder import generate_complaint_text
 from priority_calculator import calculate_priority
+from worker_allocator import select_worker_for_department
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+# SLA hours when first assigning (aligned with assign_complaint Lambda)
+_SLA_HOURS = {
+    "pothole": 48,
+    "water": 24,
+    "garbage": 72,
+    "streetlight": 96,
+}
+_DEFAULT_SLA_HOURS = 72
 
 
 def save_to_dynamodb(item: dict) -> None:
@@ -25,7 +35,7 @@ def save_to_dynamodb(item: dict) -> None:
         logger.error("DynamoDB put_item failed for %s: %s", item.get("incident_id"), str(exc))
 
 
-def send_email_notification(incident_id, department, category, severity, complaint_text):
+def send_email_notification(incident_id, department, category, severity, complaint_text, assigned_line=""):
     if not SES_SOURCE_EMAIL:
         logger.info("SES_SOURCE_EMAIL is not configured; skipping email notification for %s", incident_id)
         return
@@ -37,8 +47,9 @@ def send_email_notification(incident_id, department, category, severity, complai
         f"Complaint ID : {incident_id}\n"
         f"Category     : {category}\n"
         f"Severity     : {severity}\n"
-        f"Department   : {department}\n\n"
-        f"Description:\n{complaint_text}\n\n"
+        f"Department   : {department}\n"
+        f"{assigned_line}"
+        f"\nDescription:\n{complaint_text}\n\n"
         f"Please take appropriate action.\n"
     )
 
@@ -72,7 +83,7 @@ def normalize_phone_number(raw_phone: str) -> str | None:
     return None
 
 
-def send_sms_notification(incident_id, department, category, severity, complaint_text, user_phone):
+def send_sms_notification(incident_id, department, category, severity, complaint_text, user_phone, status_label="submitted"):
     if not SMS_NOTIFICATIONS_ENABLED:
         logger.info("SMS notifications disabled; skipping SMS for %s", incident_id)
         return
@@ -88,7 +99,7 @@ def send_sms_notification(incident_id, department, category, severity, complaint
         f"Category: {category}\n"
         f"Severity: {severity}\n"
         f"Dept: {department}\n"
-        f"Status: submitted\n"
+        f"Status: {status_label}\n"
         f"Details: {complaint_text[:240]}"
     )
 
@@ -251,15 +262,46 @@ def lambda_handler(event, context):
         if val:
             complaint_record[field] = val
 
+    # Auto-assign to a worker in the same department (valid complaints only)
+    if complaint_status == "submitted":
+        picked = select_worker_for_department(department, incident_id)
+        if picked:
+            worker_phone, worker_name = picked
+            now_assign = datetime.now(timezone.utc).isoformat()
+            cat_key = (category or "pothole").lower()
+            sla_hours = _SLA_HOURS.get(cat_key, _DEFAULT_SLA_HOURS)
+            sla_deadline = (datetime.now(timezone.utc) + timedelta(hours=sla_hours)).isoformat()
+            complaint_record["status"] = "assigned"
+            complaint_record["assigned_to"] = worker_phone
+            complaint_record["assigned_to_name"] = worker_name
+            complaint_record["assigned_at"] = now_assign
+            complaint_record["sla_deadline"] = sla_deadline
+            prior_hist = existing.get("status_history")
+            history_list = list(prior_hist) if isinstance(prior_hist, list) else []
+            history_list.append(
+                {
+                    "status": "assigned",
+                    "timestamp": now_assign,
+                    "actor": "system",
+                    "note": f"Auto-assigned to {worker_name} ({department})",
+                }
+            )
+            complaint_record["status_history"] = history_list
+
     save_to_dynamodb(complaint_record)
 
     # 7. email notification
+    assign_line = ""
+    if complaint_record.get("assigned_to_name"):
+        assign_line = f"Assigned to  : {complaint_record['assigned_to_name']}\n"
+
     send_email_notification(
         incident_id=incident_id,
         department=department,
         category=category,
         severity=severity,
         complaint_text=complaint_text,
+        assigned_line=assign_line,
     )
 
     send_sms_notification(
@@ -269,6 +311,7 @@ def lambda_handler(event, context):
         severity=severity,
         complaint_text=complaint_text,
         user_phone=existing.get("user_phone"),
+        status_label=complaint_record.get("status", "submitted"),
     )
 
     # 8. return result

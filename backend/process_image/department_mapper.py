@@ -9,14 +9,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ── Department Lookup Table ──────────────────────────────────────────────────
+# Labels must match worker `department` values in Admin (PWD, Sanitation, …).
 DEPARTMENT_MAP: dict[str, str] = {
-    "pothole":     "Road Department",
+    "pothole":     "PWD",
     "garbage":     "Sanitation",
-    "water":       "Water Board",
-    "streetlight": "Electrical Department",
+    "water":       "Water Supply",
+    "streetlight": "Electricity",
 }
 
-DEFAULT_DEPARTMENT: str = "General Department"
+DEFAULT_DEPARTMENT: str = "PWD"
 
 
 def get_department(category: str) -> str:
@@ -27,8 +28,7 @@ def get_department(category: str) -> str:
         category: Detected issue type (case-insensitive).
 
     Returns:
-        Department name string.  Falls back to "General Complaints"
-        if the category is not recognized.
+        Department name string. Falls back to PWD if the category is not recognized.
     """
     cat = category.lower().strip()
     department = DEPARTMENT_MAP.get(cat, DEFAULT_DEPARTMENT)

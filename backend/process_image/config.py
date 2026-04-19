@@ -16,6 +16,7 @@ BUCKET_NAME: str = os.environ.get("BUCKET_NAME", "JanSevaAI-images")
 
 # ── DynamoDB ─────────────────────────────────────────────────────────────────
 TABLE_NAME: str = os.environ.get("TABLE_NAME", "Complaints")
+WORKERS_TABLE_NAME: str = os.environ.get("WORKERS_TABLE_NAME", "Workers")
 
 # ── YOLO FastAPI Inference Endpoint (EC2) ────────────────────────────────────
 EC2_ENDPOINT: str = os.environ.get("EC2_ENDPOINT", "http://localhost:8000/predict")
